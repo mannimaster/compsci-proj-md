@@ -17,10 +17,28 @@
 
 
 from setuptools import setup
-import versioneer
+import versioneer, sys
+
+
+def get_cmdclass():
+    versioneer_cmds = versioneer.get_cmdclass()
+    from setuptools.command.test import test as TestCommand
+    class PyTest(TestCommand):
+        user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+        def initialize_options(self):
+            TestCommand.initialize_options(self)
+            self.pytest_args = ['md']
+        def run_tests(self):
+            # import here, cause outside the eggs aren't loaded
+            import pytest
+            errno = pytest.main(self.pytest_args)
+            sys.exit(errno)
+    versioneer_cmds['test'] = PyTest
+    return versioneer_cmds
+
 
 setup(
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=get_cmdclass(),
     name='md',
     version=versioneer.get_version(),
     description="Simulation of molecular dynamics applied to ionic solids",
@@ -40,10 +58,10 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Physics'],
     keywords=[],
-    url='https://github.com/cwehmeyer/pysor',
+    url='https://github.com/mannimaster/compsci-proj-md',
     author='Nils Harmening, Marco Manni, Darian Steven Viezzer, Steffi, Hendrik',
     author_email='nils.harmening@fu-berlin.de',
     license='GPLv3+',
     packages=['md'],
     #install_requires=['numpy>=1.7.0', 'cython>=0.22'],
-    )
+    tests_require=['pytest'])
