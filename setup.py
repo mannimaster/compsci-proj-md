@@ -17,10 +17,12 @@
 
 
 from setuptools import setup
+import versioneer
 
 setup(
+    cmdclass=versioneer.get_cmdclass(),
     name='md',
-    version=0.0.0,
+    version=versioneer.get_version(),
     description="Simulation of molecular dynamics applied to ionic solids",
     classifiers=[
         'Development Status :: a - Planning',
