@@ -1,7 +1,6 @@
 class dynamics(object):
 
     def __init__(self):
-        raise NotImplementedError('You cannot create a dynamics object, just use the classmethods')
         return
 
     def __velocity_verlet_integrator(self,Positions,Velocities, Forces, Labels,Sigma, Epsilon ,dt):
