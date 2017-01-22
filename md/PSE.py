@@ -1,9 +1,5 @@
-
-# coding: utf-8
-
-# In[ ]:
-
 import numpy as np
+
 PSE = {}
 # PSE['Element'] = [atomic number, mass, LJ-sigma, LJ-Eps]
 PSE['H'] = np.array([1, 1.00794, 'placeholder_sigma', 'placeholer_eps'])
