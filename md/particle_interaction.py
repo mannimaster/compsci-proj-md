@@ -154,4 +154,4 @@ class lennard_jones(__particle_interaction):
                                     *( (6 /dist**2 (-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1) 
 
         return Force_LJ
-        return None
+     
