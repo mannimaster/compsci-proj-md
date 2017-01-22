@@ -1,7 +1,7 @@
 '''
 Class for the Molecular Dynamics Simulation
 '''
-import PSE
+import PSE.PSE as PSE
 class System(object):
     """ This Class defines the Chemical Systems
     input must look as follows:
@@ -19,39 +19,37 @@ class System(object):
         return
     
     def get_Labels(self):
-        """ Creates an n x 3 Array Containing the Labels of the System.
-        Each Row belongs to 1 Particle and contains [masses, charges, chemical_label]"""
-        s = sum(Coefficients)
-        m = np.zeros(n*s)
-        q = np.zeros(n*s)
-        chemical_labels  = np.zeros(n*s)
-        size = np.size(Symbols)
+        s = np.sum(self.Coefficients)
+        m = np.zeros(self.n*s)
+        q = np.zeros(self.n*s)
+        chemical_labels  = np.zeros(self.n*s)
+        size = np.size(self.Symbols)
 
-        m[:n*Coefficients[0]] = PSE[ Symbols[0] ][1].astype('float64')
-        for j in np.arange((np.size(Coefficients)-1)):
-            m[n*np.cumsum(Coefficients)[j]:n*np.cumsum(Coefficients)[j+1]] = PSE[ Symbols[j+1] ][1].astype('float64')
+        m[:self.n*self.Coefficients[0]] = PSE[ self.Symbols[0] ][1].astype('float64')
+        for j in np.arange((np.size(self.Coefficients)-1)):
+            m[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = PSE[ self.Symbols[j+1] ][1].astype('float64')
 
-        q[:n*Coefficients[0]] = Charges[0]
-        for j in np.arange((np.size(Coefficients)-1)):
-            q[n*np.cumsum(Coefficients)[j]:n*np.cumsum(Coefficients)[j+1]] = Charges[j+1]
+        q[:self.n*self.Coefficients[0]] = self.Charges[0]
+        for j in np.arange((np.size(self.Coefficients)-1)):
+            q[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = self.Charges[j+1]
 
 
-        index = np.zeros(np.size(Symbols))
+        index = np.zeros(np.size(self.Symbols))
         for i in np.arange(np.size(index)):
             index[i] = 2**i-1
 
-        chemical_labels[:n*Coefficients[0]] = index[0]
-        for j in np.arange((np.size(Coefficients)-1)):
-            chemical_labels[n*np.cumsum(Coefficients)[j]:n*np.cumsum(Coefficients)[j+1]] = index[j+1]
+        chemical_labels[:self.n*self.Coefficients[0]] = index[0]
+        for j in np.arange((np.size(self.Coefficients)-1)):
+            chemical_labels[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = index[j+1]
 
-        Labels  = np.zeros((n*s,3))
+        Labels  = np.zeros((self.n*s,3))
         Labels[:,0] = m
         Labels[:,1] = q
         Labels[:,2] =chemical_labels
         return Labels
     
     def get_LJ_parameter(self):
-        index = np.zeros(np.size(Symbols))
+        index = np.zeros(np.size(self.Symbols))
         for i in np.arange(np.size(index)):
             index[i] = 2**i-1
 
@@ -63,13 +61,13 @@ class System(object):
             l2_i = np.log2(i+1).astype(int)
             for j in index:
                 l2_j = np.log2(j+1).astype(int)
-                Sigma[i+j] = (PSE[Symbols[l2_i]][2].astype(float)+PSE[Symbols[l2_j]][2].astype(float)) /2.0
+                Sigma[i+j] = (PSE[self.Symbols[l2_i]][2].astype(float)+PSE[self.Symbols[l2_j]][2].astype(float)) /2.0
 
         for i in index:
             l2_i = np.log2(i+1).astype(int)
             for j in index:
                 l2_j = np.log2(j+1).astype(int)
-                Epsilon[i+j] = np.sqrt(PSE[Symbols[l2_i]][3].astype(float)*PSE[Symbols[l2_j]][3].astype(float))
+                Epsilon[i+j] = np.sqrt(PSE[self.Symbols[l2_i]][3].astype(float)*PSE[self.Symbols[l2_j]][3].astype(float))
         return Sigma, Epsilon
     
 class md(System):
