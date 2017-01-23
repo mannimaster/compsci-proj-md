@@ -24,16 +24,44 @@ class dynamics(object):
         Velocities_new = Velocities + (Forces_old+Forces_new)/(2*(np.outer(Labels[:,0],np.ones(3))))*dt
 
         return Positions_new, Velocities_new, Forces_New
+    
+    def Thermometer(self, Labels, Velocities):
+        """ Compute the Instantaneos Temperature of a given Frame
+        
+        Parameters
+        ------------
+        Labels: Nx3 Array
+            Array with one Row for each particle, containing masses, charges and chemical label repsectively
+            
+        Velocities: Nx3 Array
+            Array with one Row for each particle, containing its velocities componentwise. 
+           
+        Returns
+        -----------
+        Temperatur: float
+            The instantaneous Temperature of the System
+        """
+        m = Labels[:,0] #Masses
+        N = np.size(m)
+        M = np.sum(m) #Total Mass
+        CM = np.sum( np.reshape( np.repeat(m,3) ,(N,3) )*Velocities, 0)/M #Velocity of Center of Mass: (Sum_over_i (m_i*v_i) )/M
+        internal_Velocities = Velocities-CM #remove components along external degrees of freedom
+        Temperature = np.sum(m*np.linalg.norm(internal_Velocities,axis = 1)**2 )/1.38064852e-23/(3*N-3) #Calculate the Actual Temperature
+        # T = 2/kB/N_df * <K>
+        #<K> = Sum_over_i (m_i*v_i**2)/2
+        # N_df = 3*N-3
+        return Temperature
 
     def compute_dynamics(self,Positions,Velocities,Forces,Labels,Sigma, Epsilon ,dt, Steps):
-        Trajectory = np.zeros((N,3,Steps))
-        Trajectory[:,:,0] = Positions
+        N = np.size(Positions[:,0])
+        Trajectory = np.zeros((N,3,Steps+1))
+        Trajectory[:,:,0] = Positions #initial Positions
         for i in np.arange(Steps):
         """Propagates the System using Velocity Verlet Integrator and Andersen Thermostat"""
             # Calculate new Positions and Forces
             Positions_new, Velocities_new, Forces_new = self.Velocity_Verlet(Positions,Velocities,Forces,Labels,Sigma, Epsilon ,dt)
             # Update Trajectory frame, Positions and Velocites
-            Trajectory[:,:,i] = Positions_new
+            Trajectory[:,:,i+1] = Positions_new
             Positions = Positions_new   
             Velocities = Velocities_new
 
