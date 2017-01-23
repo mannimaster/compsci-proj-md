@@ -19,6 +19,7 @@ class System(object):
         return
     
     def get_Labels(self):
+        """Create the NX3 Array Labels containing each Particles Mass, Charge and chemical Label """
         s = np.sum(self.Coefficients)
         m = np.zeros(self.n*s)
         q = np.zeros(self.n*s)
@@ -28,7 +29,8 @@ class System(object):
         m[:self.n*self.Coefficients[0]] = PSE[ self.Symbols[0] ][1].astype('float64')
         for j in np.arange((np.size(self.Coefficients)-1)):
             m[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = PSE[ self.Symbols[j+1] ][1].astype('float64')
-
+        m *= 1.660539040e-27  # Correcting Unit, amu --> kg
+        
         q[:self.n*self.Coefficients[0]] = self.Charges[0]
         for j in np.arange((np.size(self.Coefficients)-1)):
             q[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = self.Charges[j+1]
