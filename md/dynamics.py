@@ -25,13 +25,13 @@ class dynamics(object):
 
         return Positions_new, Velocities_new, Forces_New
 
-    def compute_dynamics(self, Steps):
+    def compute_dynamics(self,Positions,Velocities,Forces,Labels,Sigma, Epsilon ,dt, Steps):
         Trajectory = np.zeros((N,3,Steps))
         Trajectory[:,:,0] = Positions
         for i in np.arange(Steps):
         """Propagates the System using Velocity Verlet Integrator and Andersen Thermostat"""
             # Calculate new Positions and Forces
-            Positions_new, Velocities_new, Forces_new = Velocity_Verlet(Positions,Velocities,Forces,Labels,Sigma, Epsilon ,dt)
+            Positions_new, Velocities_new, Forces_new = self.Velocity_Verlet(Positions,Velocities,Forces,Labels,Sigma, Epsilon ,dt)
             # Update Trajectory frame, Positions and Velocites
             Trajectory[:,:,i] = Positions_new
             Positions = Positions_new   
