@@ -5,7 +5,7 @@ PSE = {}
 PSE['H'] = np.array([1, 1.00794, 'placeholder_sigma', 'placeholer_eps'])
 PSE['He']= np.array([2, 4.002602, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Li']= np.array([3, 6.941, 'placeholder_sigma', 'placeholer_eps'])
-PSE['Na']= np.array([11, 22.98977, 0.385, 0.0022 ])
+PSE['Na']= np.array([11, 22.98977, 0.385e-9, 0.0022e-3 ])
 PSE['K'] = np.array([19, 39.0983, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Rb']= np.array([37, 85.4678, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Cs']= np.array([55, 132.90545, 'placeholder_sigma', 'placeholer_eps'])
@@ -22,9 +22,9 @@ PSE['Se']= np.array([34, 78.96, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Te']= np.array([52, 127.60, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Po']= np.array([84, 209.98, 'placeholder_sigma', 'placeholer_eps'])
 PSE['F'] = np.array([9, 18.984032, 'placeholder_sigma', 'placeholer_eps'])
-PSE['Cl']= np.array([17, 35.45, 0.385, 2.972])
-PSE['Br']= np.array([35, 79.904, 'placeholder_sigma', 'placeholer_eps'])
-PSE['I'] = np.array([53, 126.90447, 'placeholder_sigma', 'placeholer_eps'])
+PSE['Cl']= np.array([17, 35.45, 0.385e-9, 2.972e-3])
+PSE['Br']= np.array([35, 79.904, 0.420e-9, 2.972e-3])
+PSE['I'] = np.array([53, 126.90447, 0.480e-9, 2.972e-3])
 PSE['As']= np.array([85, 209.9871, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Sc']= np.array([21, 44.95591, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Ti']= np.array([22, 47.867, 'placeholder_sigma', 'placeholer_eps'])
@@ -40,6 +40,6 @@ PSE['Zn']= np.array([30, 65.409, 'placeholder_sigma', 'placeholer_eps'])
 # Source Masses: 
 #https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Periodensystem_der_Elemente.svg/2000px-Periodensystem_der_Elemente.svg.png
 
-### Source for Values of sigma and epsilon (Na and Cl)
+### Source for Values of sigma and epsilon (Na, Cl, Br, I)
 #I. Gladich et al. / Chemical Physics Letters 489 (2010) 113–117
 
