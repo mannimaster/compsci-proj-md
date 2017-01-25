@@ -1,8 +1,4 @@
 
-# coding: utf-8
-
-# In[19]:
-
 import numpy as np
 # Fill these before you start the Simulation
 
@@ -16,7 +12,7 @@ Coefficients = np.array([1,1])
 Charges = np.array([1.0 ,-1.0])
 
 #Number of Particles
-N = 100 
+N = 10
 
 #Boxsize
 L_x=5.0
@@ -28,7 +24,10 @@ L = np.array([L_x, L_y, L_z])
 r_cut_LJ = 1.5
 
 #Short-Range Potential Cutoff Radius
-r_cut_short_range = 1.5
+r_cut_coulomb = 1.5
+
+#Accuracy Factor, the cutofferror is given by exp(-p)
+p = 10.0
 
 #Temperature 
 T = 100 # Kelvin 
@@ -48,9 +47,19 @@ L = np.array([L_x, L_y, L_z])
 #Reassignment Probability
 p_rea = dt/tau
 
+#Coulomb interaction sigma
+std = r_cut_coulomb/np.sqrt(2*p)
+
+#K_cut
+k_cut = 2*p/r_cut_coulomb
+
 #number of Boxes to consider for LJ-Potential
-n_boxes_LJ = np.floor(r_cut_LJ/np.max(L)).astype(int) 
+n_boxes_LJ = np.ceil(r_cut_LJ/np.max(L)).astype(int) 
 
 ##number of Boxes to consider for short ranged Potential
-n_boxes_short_range = np.floor(r_cut_short_range/np.max(L)).astype(int)
+n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
+
+#largest values of k to consider for long range Potential
+k_max_long_range = k_cut/(2*np.pi*np.sqrt( np.sum( ( 1/L)**2 ) ))
+
 

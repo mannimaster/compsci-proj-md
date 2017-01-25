@@ -2,7 +2,7 @@ import numpy as np
 class directions(object):
     
     def __init__(self, n_boxes):
-        self.n_boxes = n_boxes
+        self.n_boxes = int(n_boxes)
         return
     
     def get_directions(self):

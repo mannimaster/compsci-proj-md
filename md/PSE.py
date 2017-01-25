@@ -36,10 +36,3 @@ PSE['Co']= np.array([27, 58.93320, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Ni']= np.array([28, 58.6934, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Cu']= np.array([29, 63.546, 'placeholder_sigma', 'placeholer_eps'])
 PSE['Zn']= np.array([30, 65.409, 'placeholder_sigma', 'placeholer_eps'])
-
-# Source Masses: 
-#https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Periodensystem_der_Elemente.svg/2000px-Periodensystem_der_Elemente.svg.png
-
-### Source for Values of sigma and epsilon (Na, Cl, Br, I)
-#I. Gladich et al. / Chemical Physics Letters 489 (2010) 113–117
-

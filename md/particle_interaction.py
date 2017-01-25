@@ -1,6 +1,10 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from boxvectors import directions as directions
-
+from neighbourlist import neighbourlist
+import numpy as np
+from scipy.special import erf
+from scipy.special import erfc
+from scipy.constants import epsilon_0
 '''
 Abstract class for implementing particle interaction
 '''
@@ -21,6 +25,9 @@ class __particle_interaction(object):
     @abstractmethod
     def compute_forces(self):
         pass
+    # will this work in child classes ?
+    def LinComb(self,n):
+        return directions(n).get_directions()
 
 
     # if we have some class properties, we can implement it like below
@@ -32,10 +39,12 @@ class __particle_interaction(object):
 
 
 
-class coloumb(__particle_interaction):
+class  coulomb(__particle_interaction):
 
-    def __init__(self):
-        raise NotImplementedError('You cannot create a coloumb object, just use the methods')
+    def __init__(self,std, n_boxes_short_range,k_max_long_range ):
+        self.std = std
+        self.n_boxes_short_range =n_boxes_short_range 
+        self.k_max_long_range = k_max_long_range
         return
 
 
@@ -53,14 +62,13 @@ class coloumb(__particle_interaction):
     def __long_range_potential(self):
         # do anything
         return None
+    
+    def compute_forces(self,Positions,R, Labels,L):
+        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces()
+        return Coulumb_forces
 
-
-    def compute_forces(self,positions,box):
-        # compute forces
-        return None
-
-
-    def __short_range_forces(self,Positions,R,Sigma, Epsilon, Labels, std, L, Directions):
+    
+    def __short_range_forces(self,Positions,R, Labels,L):
         ''' Calculate the Force resulting from the short range coulomb interaction between the Particles
 
         Parameters
@@ -71,12 +79,6 @@ class coloumb(__particle_interaction):
 
         R: Nx1 Array
             Array with N entries. Contains each Particles Distance to the coordinate origin.
-
-        Sigma: 3x1 Array
-            Array with 3 entries. Regarding 2 Particles the entries are: Sigma = [sigma_AA, simga_AB, sigma_BB].
-
-        Epsilon: 3x1 Array
-            Array with 3 entries. Regarding 2 Particles the entries are: Epsilon = [epsilon_AA, epsilon_AB, epsilon_BB].
 
         Labels: Nx? Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
@@ -98,7 +100,7 @@ class coloumb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the short-range-Force acting upon Particle i componentwise. 
 
         '''
-        K = Directions
+        K = self.LinComb(self.n_boxes_short_range)
         K[:,0] *=L[0]
         K[:,1] *=L[1]
         K[:,2] *=L[2]
@@ -106,13 +108,13 @@ class coloumb(__particle_interaction):
         N = np.size(Positions[:,0])
         Force_short_range = np.zeros((N,3))
         k = np.size(K[:,0])
-
-
+        charges = np.zeros((N,3))
+        charges[:,0]=Labels[:,1]  
+        charges[:,1]=Labels[:,1] 
+        charges[:,2]=Labels[:,1] 
         for i in np.arange(N):
 
             dists_single_cell = Positions[i,:]-Positions
-            charges = np.resize( Labels[current_Neighbors,1] , np.shape(dists_single_cell))
-
             #This Skript paralellizes the sum over j and executes the sum over vectors n within the loop
             for j in np.arange(k):
                 dists = dists_single_cell+K[j]
@@ -120,23 +122,22 @@ class coloumb(__particle_interaction):
                 norm_dists = np.linalg.norm(dists)
 
                 Force_short_range[i,:] += np.sum(charges*dists/norm_dists**2 
-                *( erfc( dists/np.sqrt(2)/std )/norm_dists 
-                + np.sqrt(2.0/np.pi)/std*np.exp(-norm_dists**2/(2*std**2) )) ,0)
+                *( erfc( dists/np.sqrt(2)/self.std )/norm_dists 
+                + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* np.resize( Labels[:,1], np.shape(Positions) ) /(8*np.pi*Epsilon_0)
+        Force_short_range = Force_short_range* charges /(8*np.pi*epsilon_0)
         return Force_short_range
 
 
     def __long_range_forces(self):
         # do anything
-        return None
+        return 0
 
 
 class lennard_jones(__particle_interaction):
 
     def __init__(self):
-        raise NotImplementedError('You cannot create a lennard_jones object, just use the classmethods')
         return
 
 
@@ -146,7 +147,7 @@ class lennard_jones(__particle_interaction):
         return None
 
 
-    def compute_forces(self,Positions,R,Sigma, Epsilon, Labels, switch_parameter, r_switch):
+    def compute_forces(self,Positions,R,Sigma, Epsilon, Labels,L, switch_parameter, r_switch):
         ''' Calculate the Force resulting from the lennard Jones Interaction between the Particles
 
         Parameters
@@ -182,24 +183,25 @@ class lennard_jones(__particle_interaction):
 
         '''
         #Get Neighbour-List, naive_Dists should be replaced in the future by Nils' Work
-        Neighbors = get_Neighbors(R)
+        NB = neighbourlist()
+        Neighbors = NB.naive_Dists(R)
 
         N = np.size(R)
         Force_LJ = np.zeros((N,3))
 
         for i in np.arange(N):
             #Find the Indices that should be used for sigma and eps (by adding the corresponding labels)
-            index = (Labels[i,2]*np.ones(N) +Labels[:,2]).astype('int')
+            index_LJ = (Labels[i,2]*np.ones(N) +Labels[:,2]).astype('int')
 
             #Create Arrays that contain the approriate Values for sigma and eps, depending on the interaction pair.
-            sig6 =(Sigma*np.ones( (N,3) ) )[0,index]**6
-            eps = (Epsilon*np.ones( (N,3) ) )[0,index]
+            sig6 =(Sigma*np.ones( (N,3) ) )[0,index_LJ]**6
+            eps = (Epsilon*np.ones( (N,3) ) )[0,index_LJ]
 
             Positions_Difference = Positions[i,:] - Positions
             
             Positions_Difference[:,0] = Positions_Difference[:,0]%(L[0]/2)
-            Positions_Difference[:,1] = Positions_Difference[:,0]%(L[1]/2)
-            Positions_Difference[:,2] = Positions_Difference[:,0]%(L[2]/2)
+            Positions_Difference[:,1] = Positions_Difference[:,1]%(L[1]/2)
+            Positions_Difference[:,2] = Positions_Difference[:,2]%(L[2]/2)
             for j in Neighbors[i]:
                 #Calculate the Distances 
                 dist = np.linalg.norm(Positions_Difference[j,:])
@@ -217,8 +219,8 @@ class lennard_jones(__particle_interaction):
                     Force_LJ[i,:] += 48.0 *eps[j] *sig6[j] *Positions_Difference[j,:] /dist**8 *(-sig6_dist_ratio +0.5)
                 else:
                     #This is the derivative of the switch-function, used to cut the LJ-Potential
-                    Force_LJ[i,:] += 8.0 *eps[j] *Positions_Difference[i,:] *sig6_dist_ratio
-                                    *( (6 /dist**2 (-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1) 
+                    Force_LJ[i,:] += 8.0 *eps[j] *Positions_Difference[i,:] *sig6_dist_ratio*(
+                    (6 /dist**2 (-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1)) 
 
-        return Force_LJ
+            return Force_LJ
      

@@ -1,15 +1,30 @@
 '''
 Class for the Molecular Dynamics Simulation
 '''
-import PSE.PSE as PSE
+import numpy as np
+import PSE
+from particle_interaction import coulomb
+from particle_interaction import lennard_jones
+from dynamics import dynamics
+PSE = PSE.PSE
+
 class System(object):
     """ This Class defines the Chemical Systems
     input must look as follows:
+    
     e.g. NaCl
+    
     Symbols = ['Na', Cl']  #Chemical Symbols of the types of Atmos
+    
     Coeffcients = [1,1] #Stochiometric coefficients in the sum formula
+    
     Charges = [1, -1] #Charges of the individual chemical species
+    
     n = int #Number of Particles in the System
+    
+    Returns:
+    ----------
+    Nothing
     """
     def __init__(self,Symbols,Coefficients, Charges,n):
         self.Symbols = Symbols
@@ -19,7 +34,7 @@ class System(object):
         return
     
     def get_Labels(self):
-        """Create the NX3 Array Labels containing each Particles Mass, Charge and chemical Label """
+        """Create the Nx3 Array Labels containing each Particles Mass, Charge and chemical Label """
         s = np.sum(self.Coefficients)
         m = np.zeros(self.n*s)
         q = np.zeros(self.n*s)
@@ -37,8 +52,7 @@ class System(object):
 
 
         index = np.zeros(np.size(self.Symbols))
-        for i in np.arange(np.size(index)):
-            index[i] = 2**i-1
+        index = 2**np.arange(np.size(index))-1
 
         chemical_labels[:self.n*self.Coefficients[0]] = index[0]
         for j in np.arange((np.size(self.Coefficients)-1)):
@@ -51,9 +65,9 @@ class System(object):
         return Labels
     
     def get_LJ_parameter(self):
+        
         index = np.zeros(np.size(self.Symbols))
-        for i in np.arange(np.size(index)):
-            index[i] = 2**i-1
+        index = 2**np.arange(np.size(index))-1
 
         index = index.astype(int)
         Sigma = np.zeros((2*max(index)+1).astype(int) )
@@ -72,45 +86,216 @@ class System(object):
                 Epsilon[i+j] = np.sqrt(PSE[self.Symbols[l2_i]][3].astype(float)*PSE[self.Symbols[l2_j]][3].astype(float))
         return Sigma, Epsilon
     
-class md(System):
+    
+class md(object):
 
     '''
     Initializes the md object.
 
     Parameters
-    ----------
-        particleposition : array with n rows and m columns
-            The number of rows represents the number of particles
-            The number of columns represents the number of dimensions (typical up to 3)
-            Each row represents the position of a particle
+        ----------
+        
+        positions: Nx3 Array 
+            Array with N rows and 3 columns. Contains the Positions of each Particle component wise
             
-        particleproperties : array with n rows and 4 columns
+        R : Nx1 Array 
+            Array with N rows and 1 column. Contains the euclidic distances of each particle to the coordinate origin. 
+            
+        properties : Nx3 Array
             The number of rows represents the number of prticles
-            The columns represent the properties [q, m, LJsigma, LJepsilon]
+            The columns represent the properties [q, m, label]
             q = particle charge
             m = particle mass
-            LJsigma = Sigma-Parameter for the Lennard Jones (Zero cross distance)
-            LJepsilon = Epsilon-Parameter for the Lennard Jones (valley depth)
+            label = number to identify the type of atom
             
-        box : array with 1 row and m coloumns
-            The array contains the length of the box in each dimension
-            A 1 dimensional Problem has to be given as a 1x1 array
+        velocities : Nx3 Array
+            Array with N rows and 3 columns. Contains the Velocites of each Particle component wise
             
-        Temperature: int
+        box : 3xArray
+           Array containing the lengths of the edges of the box. 
+            
+        Temperature : float
             Temperature of the System in Kelvin.
-                        
+            
+        std : int 
+            Standart deviation of the Gauss Distribution, used in the Ewald Summation
+            
+        Sigma_LJ : Array
+            Contains the Lennard Jones Parameter sigma for each interaction pair
+        
+        Epsilon_LJ : Array
+             Contains the Lennard Jones Parameter epsilon for each interaction pair
+             
+        switch_parameter : 4x1 Array
+            Contains the values of the parameters used in the switch polynomial
+        
+        r_switch: float
+            Radius where the switch funtion is applied
+        
+        n_boxes_short_range: int
+            Number of Boxes to consider for the short ranged interactions
+        
+        k_max_long_range: int
+            Upper limit for any entry of any vektor k of the reciprocal space
+        
+        dt: int
+            Timestep of the Simulation
+        
+        p_rea: float
+             Reassingment probability. Denotes the coupling strength to the thermostat. It is the probability with which a particle will undergo a velocity reassignment. 
 
-        The number of rows in particleposition and particleproperties has to be the same
-        The number of coloumns in particleposition and box has to be the same
     Returns
     -------
         nothing
     '''
-    def __init__(self,particleposition,particleproperties,box,Temperatre):
+    def __init__(self, 
+                 positions,
+                 R,
+                 properties, 
+                 velocities,
+                 forces,
+                 box,
+                 Temperature,
+                 std,
+                 Sigma_LJ,
+                 Epsilon_LJ, 
+                 switch_parameter, 
+                 r_switch,
+                 n_boxes_short_range, 
+                 k_max_long_range, 
+                 dt, 
+                 p_rea):
         #check input parameters
-        self.position=particleposition
-        self.labels=particleproperties
+        self.positions=positions
+        self.R=R
+        self.labels=properties
+        self.velocities = velocities
+        self.forces = forces
         self.L=box
         self.T= Temperature
+        self.coulomb = coulomb(std, n_boxes_short_range,k_max_long_range)
+        self.lennard_jones = lennard_jones()
+        self.Sigma_LJ = Sigma_LJ
+        self.Epsilon_LJ = Epsilon_LJ
+        self.switch_parameter = switch_parameter
+        self.r_switch = r_switch
+        self.dt = dt
+        self.std = std
+        self.n_boxes_short_range = n_boxes_short_range
+        self.k_max_long_range = k_max_long_range
+        self.p_rea = p_rea
+        
         #return
-        pass
+        return
+    
+    @property
+    def positions(self):
+        return self._positions
+    
+    @positions.setter
+    def positions(self,xyz):
+        self._positions = xyz
+     
+    @property
+    def R(self):
+        return self._R
+    
+    @R.setter
+    def R(self,new_R):
+        self._R = new_R
+        
+    @property
+    def velocities(self):
+        return self._velocities
+    
+    @velocities.setter
+    def velocities(self,xyz):
+        self._velocities = xyz
+    
+    @property
+    def forces(self):
+        return self._forces    
+    @forces.setter
+    def forces(self,xyz):
+        self._forces = xyz        
+
+    
+      
+    
+
+    
+    def get_forces(self):
+        """Compute the forces for the current configuration of the System
+        
+        F_total = F_Coulomb + F_Lennard_Jones
+        
+        Returns
+        ..........
+        
+        Forces : N x 3 Array
+            Array containg the Forces that act upon each particle component wise. 
+        """
+        Forces = self.lennard_jones.compute_forces(Positions =self.positions, 
+                                                   R=self.R, 
+                                                   Sigma =self.Sigma_LJ,
+                                                   Epsilon = self.Epsilon_LJ, 
+                                                   Labels =self.labels, 
+                                                   L =self.L, 
+                                                   switch_parameter = self.switch_parameter, 
+                                                   r_switch = self.r_switch)+(
+        self.coulomb.compute_forces(Positions =self.positions,
+                                      R = self.R,
+                                      Labels = self.labels,
+                                      L = self.L) )
+        return Forces
+    
+    def propagte_system(self):
+        """ Propagates the system by one timestep of length dt. Uses the Velocity Verlet Integrator and Andersen Thermostat.
+        
+        Returns 
+        ----------
+        Positions_new : N x 3 Array
+            Array with N rows and 3 columns. Contains each particles positons component wise.
+        
+        Velocities_new : N x 3 Array
+            Array with N rows and 3 columns. Contains each particles velocity component wise.
+        
+        Forces_new : N x 3 Array
+            Array with N rows and 3 columns. Contains each the force acting upon each particle component wise.
+        
+        """
+        Positions, Velocities, Forces = dynamics().compute_dynamics(
+            self.positions, 
+            self.velocities, 
+            self.forces,
+            self.labels, 
+            self.Sigma_LJ, 
+            self.Epsilon_LJ,
+            self.dt, 
+            self.L,
+            self.std, 
+            self.n_boxes_short_range,
+            self.k_max_long_range,
+            self.p_rea,
+            self.T,
+            self.switch_parameter, 
+            self.r_switch
+        )
+        return Positions, Velocities, Forces
+    
+    def get_Temperature(self):
+        """ Calculate the instantaneous Temperature of the given Configuration.
+        
+        Returns
+        -----------
+        Temperature : float
+            The instantaneous Temperature.
+        """
+       
+        T = dynamics().Thermometer(self.labels, self.velocities)
+        return T
+        
+                         
+    
+    
+    
