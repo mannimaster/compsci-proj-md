@@ -25,7 +25,9 @@ class __particle_interaction(object):
     @abstractmethod
     def compute_forces(self):
         pass
+
     # will this work in child classes ?
+    # yes, but
     def LinComb(self,n):
         return directions(n).get_directions()
 
@@ -41,10 +43,15 @@ class __particle_interaction(object):
 
 class  coulomb(__particle_interaction):
 
-    def __init__(self,std, n_boxes_short_range,k_max_long_range ):
+    def __init__(self,std, n_boxes_short_range,L, k_max_long_range ):
         self.std = std
-        self.n_boxes_short_range =n_boxes_short_range 
-        self.k_max_long_range = k_max_long_range
+        self.n_boxes_short_range =n_boxes_short_range
+        self.volume = np.prod(np.array(L))
+
+        #compute a list with all k's out of the given k_max_long_range and L
+        #self.k_max_long_range = k_max_long_range
+        self.k_vector = [] #in dependency of L and Kmax
+
         return
 
 
@@ -59,8 +66,50 @@ class  coulomb(__particle_interaction):
         return None
 
 
-    def __long_range_potential(self):
-        # do anything
+    def __long_range_potential(self,Positions,Labels,StructureFactor):
+        ''' Calculate the Long Range Potential
+
+                Parameters
+                ---------------
+
+                Positions: Nx3 Array
+                    Array with N rows and 3 Columns, each row i contains the x,y and z coordinates of particle i.
+
+                Labels: Nx? Array
+                    Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
+                    Particle A should have the label 1 and Particle B should have the label 0.
+
+                std: float
+                    Sigma that is mentioned in the coulomb forces.
+
+                L:3x1 Array
+                    Array containg the Dimensions of the Simulation box
+
+                structure_factor: Kx1 Array
+                    Array with K rows and 1 Column, each row i contains the structure factor for each k(i)
+
+                Returns
+                --------------
+
+                coulomb_long_potential : Nx3 Array
+                    Array with N rows and 3 Columns. Each Row i contains the long-range-potential acting on a the specific particle.
+
+                '''
+
+
+        #calculates the squared absolute value of the structural factor and k
+        abssq_structure_factor = np.multiply(np.conj(StructureFactor),StructureFactor)
+        abssq_k_vector = np.multiply(np.conj(self.k_vector),self.k_vector)
+
+        coulomb_long_potential = 0
+
+        for kiteration in range(0,self.k_vector.shape[1]):
+            potexp = np.exp(-(self.std ** 2 * abssq_k_vector[kiteration]) / (float)(2)) / (float) (abssq_k_vector[kiteration])
+            coulomb_long_potential = coulomb_long_potential + abssq_structure_factor[kiteration] * potexp
+
+        coulomb_long_potential = coulomb_long_potential / (float) (self.volume * epsilon) # which epsilon?
+
+        #return coulomb_long_potential
         return None
     
     def compute_forces(self,Positions,R, Labels,L):
