@@ -60,6 +60,6 @@ n_boxes_LJ = np.ceil(r_cut_LJ/np.max(L)).astype(int)
 n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
 
 #largest values of k to consider for long range Potential
-k_max_long_range = k_cut/(2*np.pi*np.sqrt( np.sum( ( 1/L)**2 ) ))
+k_max_long_range = int(np.ceil((k_cut*L[0])/(2*np.pi*np.sqrt(3))))
 
 
