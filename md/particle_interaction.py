@@ -84,14 +84,9 @@ class  coulomb(__particle_interaction):
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
             Particle A should have the label 1 and Particle B should have the label 0.
 
-        std: float
-            Sigma that is mentioned in the coulomb forces.
-
         L:3x1 Array
             Array containg the Dimensions of the Simulation box
 
-        Directions: Array
-            Array that contains Pointers to neighbouring boxes
 
         Returns
         --------------
@@ -143,15 +138,9 @@ class  coulomb(__particle_interaction):
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
             Particle A should have the label 1 and Particle B should have the label 0.
 
-        std: float
-            Sigma that is mentioned in the coulomb forces.
-
         L:3x1 Array
             Array containg the Dimensions of the Simulation box
             
-        k_max_long_range : int
-            Maximal value of k1,k2,k3 which comes from cutoff-radius in k-space
-
 
         Returns
         --------------
