@@ -149,7 +149,7 @@ class  coulomb(__particle_interaction):
         L:3x1 Array
             Array containg the Dimensions of the Simulation box
             
-        k_max_long_range : float
+        k_max_long_range : int
             Maximal value of k1,k2,k3 which comes from cutoff-radius in k-space
 
 
