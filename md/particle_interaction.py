@@ -152,16 +152,19 @@ class  coulomb(__particle_interaction):
         i = np.complex(0,1)
         
         # setup k-vector matrix
-        k = self.LinComb(self.k_max_long_range)
-        k *= (2*np.pi)/L[0]
+        k = self.LinComb(self.k_max_long_range)*(2*np.pi)/L[0]
+        # two k-vectors i,j have property k_i = -k_j respectively, delete one of them and delete k = (0,0,0)
+        k = np.delete(k, (np.arange((np.shape(k)[0]+1)/2)), axis=0)
+        # delete all k-vectors that are longer than cutoff
+        k = np.delete(k, (np.where(np.sqrt(sum(np.transpose(k**2))) > k_cut)[0]), axis=0)
         
         # setup data needed for calculation
         k_betqua = sum(np.transpose(k**2))          # |k|^2
         num_k = np.shape(k_betqua)[0]               # number of k-vectors
         num_Par = np.shape(Positions)[0]            # number of particles
-        f_1 = np.zeros((num_k,3))                   # placeholder for Forces during summation over k outside of for loop
-        f_2 = np.zeros((num_k))                     # placeholder for Forces during summation over k in for-loop
-        Force_long_range = np.zeros((num_Par,3))    # placeholder for long range forces
+        f_1 = np.zeros((num_k,3))                   # placeholder for Forces during summation over k outside of for second loop
+        f_2 = np.zeros((num_k))                     # placeholder for Forces during summation over k in second for-loop
+        Force_long_range = np.zeros((num_Par,3))    # placeholder for long ranged forces
         charges = np.zeros((num_Par,3))             # create num_Par x 3 matrix with charges
         charges[:,0]=Labels[:,1]                    # in each column L[:,1] repeated
         charges[:,1]=Labels[:,1] 
@@ -175,16 +178,13 @@ class  coulomb(__particle_interaction):
                 f_2[j] = sum(Labels[:,1]*np.sin(np.dot(k[j,:],(Positions[h,:]*np.ones((num_Par,3)) - Positions).transpose())))
             
             # complete sum over all k, (left part of equation)
-            f_1 = (((np.exp(-self.std**2/2*k_betqua)/k_betqua)*f_2)*np.ones((3,num_k))).transpose()*k
-            
-            # result with k = (0,0,0) is nan --> set to 0
-            f_1[np.isnan(f_1)] = 0   
+            f_1 = (((np.exp(-self.std**2/2*k_betqua)/k_betqua)*f_2)*np.ones((3,num_k))).transpose()*k  
             
             # actually sum over all k
             Force_long_range[h,:] = sum(f_1)   
         
         # get prefactor right                                      
-        Force_long_range *= charges/(L[0]**3*epsilon_0)
+        Force_long_range *= charges/(L[0]**3*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
         return Force_long_range
 
 
