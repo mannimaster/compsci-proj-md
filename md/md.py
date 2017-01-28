@@ -30,7 +30,7 @@ class System(object):
         self.Symbols = Symbols
         self.Coefficients = Coefficients
         self.Charges = Charges
-        self.n = n
+        self.n = int(n)
         return
     
     def get_Labels(self):
@@ -140,6 +140,9 @@ class md(object):
         
         dt: int
             Timestep of the Simulation
+            
+        k_cut: float
+            Cutoff-radius in reciprocal space
         
         p_rea: float
              Reassingment probability. Denotes the coupling strength to the thermostat. It is the probability with which a particle will undergo a velocity reassignment. 
@@ -163,8 +166,9 @@ class md(object):
                  r_switch,
                  n_boxes_short_range, 
                  k_max_long_range, 
-                 dt, 
-                 p_rea):
+                 dt,
+                 p_rea,
+                 k_cut):
         #check input parameters
         self.positions=positions
         self.R=R
@@ -173,7 +177,7 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,k_max_long_range)
+        self.coulomb = coulomb(std, n_boxes_short_range,k_max_long_range, k_cut)
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
@@ -184,7 +188,8 @@ class md(object):
         self.n_boxes_short_range = n_boxes_short_range
         self.k_max_long_range = k_max_long_range
         self.p_rea = p_rea
-        
+        self.k_cut = k_cut
+     
         #return
         return
     
@@ -279,7 +284,8 @@ class md(object):
             self.p_rea,
             self.T,
             self.switch_parameter, 
-            self.r_switch
+            self.r_switch,
+            self.k_cut
         )
         return Positions, Velocities, Forces
     
