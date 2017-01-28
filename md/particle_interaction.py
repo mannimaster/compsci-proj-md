@@ -36,7 +36,8 @@ class __particle_interaction(object):
 
 class  coulomb(__particle_interaction):
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range ):
+
+    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
         self.volume = np.prod(np.array(L))
@@ -44,7 +45,6 @@ class  coulomb(__particle_interaction):
         #compute a list with all k's out of the given k_max_long_range and L
         #self.k_max_long_range = k_max_long_range
         self.k_vector = [] #in dependency of L and Kmax
-
         return
 
 
@@ -111,7 +111,7 @@ class  coulomb(__particle_interaction):
         return coulomb_long_potential
     
     def compute_forces(self,Positions,R, Labels,L):
-        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces()
+        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels,L)
         return Coulumb_forces
 
     
@@ -131,14 +131,9 @@ class  coulomb(__particle_interaction):
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
             Particle A should have the label 1 and Particle B should have the label 0.
 
-        std: float
-            Sigma that is mentioned in the coulomb forces.
-
         L:3x1 Array
             Array containg the Dimensions of the Simulation box
 
-        Directions: Array
-            Array that contains Pointers to neighbouring boxes
 
         Returns
         --------------
@@ -177,9 +172,67 @@ class  coulomb(__particle_interaction):
         return Force_short_range
 
 
-    def __long_range_forces(self):
-        # do anything
-        return 0
+    def __long_range_forces(self,Positions,Labels,L):
+        ''' Calculate the Force resulting from the long range Coulomb interaction between the Particles
+
+        Parameters
+        ---------------
+
+        Positions: Nx3 Array
+            Array with N rows and 3 Columns, each row i contains the x,y and z coordinates of particle i.
+
+        Labels: Nx? Array
+            Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
+            Particle A should have the label 1 and Particle B should have the label 0.
+
+        L:3x1 Array
+            Array containg the Dimensions of the Simulation box
+            
+
+        Returns
+        --------------
+
+        Force_long_range: Nx3 Array
+            Array with N rows and 3 Columns. Each Row i contains the long-range-Force acting upon Particle i componentwise. 
+
+        '''
+        i = np.complex(0,1)
+        
+        # setup k-vector matrix
+        k = self.LinComb(self.k_max_long_range)*(2*np.pi)/L[0]
+        # two k-vectors i,j have property k_i = -k_j respectively, delete one of them and delete k = (0,0,0)
+        k = np.delete(k, (np.arange((np.shape(k)[0]+1)/2)), axis=0)
+        # delete all k-vectors that are longer than cutoff
+        k = np.delete(k, (np.where(np.sqrt(sum(np.transpose(k**2))) > self.k_cut)[0]), axis=0)
+        
+        # setup data needed for calculation
+        k_betqua = sum(np.transpose(k**2))          # |k|^2
+        num_k = np.shape(k_betqua)[0]               # number of k-vectors
+        num_Par = np.shape(Positions)[0]            # number of particles
+        f_1 = np.zeros((num_k,3))                   # placeholder for Forces during summation over k outside of for second loop
+        f_2 = np.zeros((num_k))                     # placeholder for Forces during summation over k in second for-loop
+        Force_long_range = np.zeros((num_Par,3))    # placeholder for long ranged forces
+        charges = np.zeros((num_Par,3))             # create num_Par x 3 matrix with charges
+        charges[:,0]=Labels[:,1]                    # in each column L[:,1] repeated
+        charges[:,1]=Labels[:,1] 
+        charges[:,2]=Labels[:,1]
+
+        for h in np.arange(num_Par):    # loop over all particles
+
+            for j in np.arange(num_k):  # loop over all k-vectors
+                
+                # "structure factor" sum (right sum in equation)
+                f_2[j] = sum(Labels[:,1]*np.sin(np.dot(k[j,:],(Positions[h,:]*np.ones((num_Par,3)) - Positions).transpose())))
+            
+            # complete sum over all k, (left part of equation)
+            f_1 = (((np.exp(-self.std**2/2*k_betqua)/k_betqua)*f_2)*np.ones((3,num_k))).transpose()*k  
+            
+            # actually sum over all k
+            Force_long_range[h,:] = sum(f_1)   
+        
+        # get prefactor right                                      
+        Force_long_range *= charges/(L[0]**3*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
+        return Force_long_range
 
 
 class lennard_jones(__particle_interaction):
