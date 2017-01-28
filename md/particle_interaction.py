@@ -41,10 +41,11 @@ class __particle_interaction(object):
 
 class  coulomb(__particle_interaction):
 
-    def __init__(self,std, n_boxes_short_range,k_max_long_range ):
+    def __init__(self,std, n_boxes_short_range,k_max_long_range,k_cut ):
         self.std = std
         self.n_boxes_short_range =n_boxes_short_range 
         self.k_max_long_range = k_max_long_range
+        self.k_cut = k_cut
         return
 
 
@@ -64,7 +65,7 @@ class  coulomb(__particle_interaction):
         return None
     
     def compute_forces(self,Positions,R, Labels,L):
-        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces()
+        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels,L)
         return Coulumb_forces
 
     
@@ -156,7 +157,7 @@ class  coulomb(__particle_interaction):
         # two k-vectors i,j have property k_i = -k_j respectively, delete one of them and delete k = (0,0,0)
         k = np.delete(k, (np.arange((np.shape(k)[0]+1)/2)), axis=0)
         # delete all k-vectors that are longer than cutoff
-        k = np.delete(k, (np.where(np.sqrt(sum(np.transpose(k**2))) > k_cut)[0]), axis=0)
+        k = np.delete(k, (np.where(np.sqrt(sum(np.transpose(k**2))) > self.k_cut)[0]), axis=0)
         
         # setup data needed for calculation
         k_betqua = sum(np.transpose(k**2))          # |k|^2
