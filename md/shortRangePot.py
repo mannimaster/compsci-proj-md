@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.special as scsp
 import scipy.constants as scco
-from neighbourlist import neighbourlist as nList
+from neighbourlist import neighborListInclDist as nList
 
 class PotentialShortCalc(object):
     constant = 1/(8*np.pi*scco.epsilon_0)
