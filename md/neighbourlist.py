@@ -35,8 +35,9 @@ class neighbourlist(object):
         dr : vector distance
             minimal distance between the inputed position considering periodic boundary conditions
         """
-        d = np.linalg.norm((position1 - position2 + half_box_length) % box_length - half_box_length)
+        #d = np.linalg.norm((position1 - position2 + half_box_length) % box_length - half_box_length)
         dr = ((position1 - position2 + half_box_length) % box_length - half_box_length)
+		d = np.linalg.norm(dr)
         return d, dr
 
     def neighborList(self, n_particles, positions, r_cutoff, r_s, box_length):
