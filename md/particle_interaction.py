@@ -40,11 +40,18 @@ class  coulomb(__particle_interaction):
     def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
-        self.volume = np.prod(np.array(L))
 
-        #compute a list with all k's out of the given k_max_long_range and L
-        #self.k_max_long_range = k_max_long_range
-        self.k_vector = [] #in dependency of L and Kmax
+        #L is a vector with the orthorombic-boxlength in all dimensions,
+        #self.volume = np.prod(np.array(L))
+
+        #L is a given number representing the boxlength in each direstion of a cubic box
+        self.volume = L ** 3
+
+        #in dependency of k_max and the box length L all linear combination are computed
+        #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
+        n_k = np.floor(np.sqrt((k_max_long_range **2 * L ** 2) / (float)(12 * np.pi ** 2)))
+        lincomb_k = directions(n_k).get_directions()
+        self.k_list = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0) * 2 * np.pi / (float)(L)
         return
 
 
@@ -79,15 +86,15 @@ class  coulomb(__particle_interaction):
         '''
 
         # computes the structural factor
-        structure_factor_matrix = np.dot(self.k_vector, np.transpose(positions))
+        structure_factor_matrix = np.dot(self.k_list, np.transpose(positions))
         structure_factor = np.dot(np.exp(-1j * structure_factor_matrix), charges)
 
         # calculates the squared absolute value of the structural factor and k
         abssq_structure_factor = np.multiply(np.conj(structure_factor), structure_factor)
-        abssq_k_vector = np.dot(self.k_vector,np.transpose(self.k_vector))
+        abssq_k_list = np.dot(self.k_list,np.transpose(self.k_list))
 
         # instead of iterating a for loop, calculating with matrix
-        potexp = np.divide(np.exp(-np.multiply(abssq_k_vector, self.std ** 2 / (float)(2))), abssq_k_vector)
+        potexp = np.divide(np.exp(-np.multiply(abssq_k_list, self.std ** 2 / (float)(2))), abssq_k_list)
         coulomb_long_potential_matrix = np.multiply(potexp, abssq_structure_factor)
         coulomb_long_potential = np.sum(coulomb_long_potential_matrix) / (float)(self.volume * epsilon_0)
 
@@ -95,8 +102,8 @@ class  coulomb(__particle_interaction):
         # first implementation with loops
         coulomb_long_potential = 0
 
-        for kiteration in range(0, self.k_vector.shape[1]):
-            potexp = np.exp(-(self.std ** 2 * abssq_k_vector[kiteration]) / (float)(2)) / (float) (abssq_k_vector[kiteration])
+        for kiteration in range(0, self.k_list.shape[1]):
+            potexp = np.exp(-(self.std ** 2 * abssq_k_list[kiteration]) / (float)(2)) / (float) (abssq_k_list[kiteration])
             coulomb_long_potential = coulomb_long_potential + abssq_structure_factor[kiteration] * potexp
 
         coulomb_long_potential = coulomb_long_potential / (float) (self.volume * epsilon_0)
