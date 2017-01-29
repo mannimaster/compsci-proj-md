@@ -1,7 +1,12 @@
 class neighbourlist(object):
-
+    """
     def __init__(self):
         raise NotImplementedError('You cannot create a neighbourlist object, just use the classmethods')
+        return
+    """
+    def __init__(self, R, box_length):
+        self.R = R
+        self.box_length = box_length
         return
 
 
@@ -29,7 +34,7 @@ class neighbourlist(object):
             For each particle the list of its neighbors
             (i.e. distance < r_cutoff) are returned.
         """
-
+        import numpy as np
         from collections import defaultdict 
         neighbors = defaultdict(list)
         N, dim = np.shape(R)
@@ -39,7 +44,7 @@ class neighbourlist(object):
         r_c = box_length / n_boxes 
 
         head = [-1] * n_boxes**3
-        list = [-1] * N
+        cllist = [-1] * N
         for i in range(0, N):
             # box index of particle by its position
             x = np.int(R[i][0] / r_c)
@@ -47,7 +52,7 @@ class neighbourlist(object):
             z = np.int(R[i][2] / r_c)
             ind_vec = np.int(box_length / r_c)
             box_index = x*ind_vec*ind_vec + y*ind_vec + z
-            list[i] = head[box_index]
+            cllist[i] = head[box_index]
             # The last one goes to the head
             head[box_index] = i
 
@@ -90,8 +95,8 @@ class neighbourlist(object):
                                         neighbors[j].append(i)
                                         
 
-                                j = list[j]
-                            i = list[i]
+                                j = cllist[j]
+                            i = cllist[i]
                                     
             
 
