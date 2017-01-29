@@ -104,13 +104,15 @@ class  coulomb(__particle_interaction):
         N = np.size(Positions[:,0])
         Force_short_range = np.zeros((N,3))
         k = np.size(K[:,0])
-        charges = np.zeros((N,3))
-        charges[:,0]=Labels[:,1]  
-        charges[:,1]=Labels[:,1] 
-        charges[:,2]=Labels[:,1] 
+        charges_pre_delete = np.zeros((N,3))
+        charges_pre_delete[:,0]=Labels[:,1]  
+        charges_pre_delete[:,1]=Labels[:,1] 
+        charges_pre_delete[:,2]=Labels[:,1] 
         for i in np.arange(N):
 
-            dists_single_cell = Positions[i,:]-Positions
+            dists_single_cell_pre_delete = Positions[i,:]-Positions
+            dists_single_cell = np.delete(dists_single_cell_pre_delete,i,0)
+            charges = np.delete(charges_pre_delete,i,0)
             #This Skript paralellizes the sum over j and executes the sum over vectors n within the loop
             for j in np.arange(k):
                 dists = dists_single_cell+K[j]
@@ -122,7 +124,7 @@ class  coulomb(__particle_interaction):
                 + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* charges /(8*np.pi*epsilon_0)
+        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*epsilon_0)
         return Force_short_range
 
 

@@ -33,10 +33,10 @@ p = 10.0
 T = 100 # Kelvin 
 
 #Timestep
-dt = 1e-9 # 1 ns
+dt = 1e-12 # 1 ns
 
 #Characetristic coupling time for Thermostat, must be larger than dt
-tau = 1e-6
+tau = 1e-10
 assert tau>dt, "tau must be larger than dt"
 
 # !!!  DO NOT CHANGE THESE LINES  !!!
