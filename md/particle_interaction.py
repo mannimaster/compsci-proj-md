@@ -5,53 +5,58 @@ import numpy as np
 from scipy.special import erf
 from scipy.special import erfc
 from scipy.constants import epsilon_0
-'''
-Abstract class for implementing particle interaction
-'''
 
 class __particle_interaction(object):
+
+    '''
+    Abstract class for implementing particle interaction
+    '''
+
     __metaclass__ = ABCMeta
 
     def __init__(self):
         raise NotImplementedError('You cannot create a particle_interaction object')
-        return
 
     # The parameter input is missing
     @abstractmethod
     def compute_potential(self):
-        pass
+        raise NotImplementedError('The method is not implemented for the abstract class')
 
 
     @abstractmethod
     def compute_forces(self):
-        pass
-    # will this work in child classes ?
-    def LinComb(self,n):
+        raise NotImplementedError('The method is not implemented for the abstract class')
+
+    # @ MARCO
+    # yes this works in the child classes, but it is not necessary like this; you just can call it directly, as you do
+    # not any calculations, just call another function.
+    @classmethod
+    def __LinComb(self,n):
         return directions(n).get_directions()
-
-
-    # if we have some class properties, we can implement it like below
-    # @abstractproperty
-    # def get_anything(self):
-
-    #if we have a method that is the same for all child classes
-    #@classmethod
-
-
 
 class  coulomb(__particle_interaction):
 
-    def __init__(self,std, n_boxes_short_range,k_max_long_range,k_cut ):
+
+    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
         self.std = std
-        self.n_boxes_short_range =n_boxes_short_range 
-        self.k_max_long_range = k_max_long_range
-        self.k_cut = k_cut
+        self.n_boxes_short_range = n_boxes_short_range
+
+        #L is a vector with the orthorombic-boxlength in all dimensions,
+        #self.volume = np.prod(np.array(L))
+
+        #L is a given number representing the boxlength in each direstion of a cubic box
+        self.volume = L ** 3
+
+        #in dependency of k_max and the box length L all linear combination are computed
+        #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
+        n_k = np.floor(np.sqrt((k_max_long_range **2 * L ** 2) / (float)(12 * np.pi ** 2)))
+        lincomb_k = directions(n_k).get_directions()
+        self.k_list = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0) * 2 * np.pi / (float)(L)
         return
 
 
-    def compute_potential(self,positions,box):
-        # do anything
-        return None
+    def compute_potential(self,charges,positions):
+        return self.__short_range_potential() + self.__long_range_potential(charges,positions)
 
 
     def __short_range_potential(self):
@@ -60,9 +65,57 @@ class  coulomb(__particle_interaction):
         return None
 
 
-    def __long_range_potential(self):
-        # do anything
-        return None
+    def __long_range_potential(self,charges,positions):
+
+        ''' Calculate the Long Range Potential
+
+                Parameters
+                ---------------
+                charges: 1 x N array
+                    Array with the charge of each particle. The index+1 indicates the particle number. However the order
+                    is not important.
+
+                positions: N x 3 Array
+                    Array with N rows, where each row represents the position of the particle with the same index
+
+
+                Returns
+                --------------
+                coulomb_long_potential : float
+                    float value of the total long range potential
+        '''
+
+        # computes the structural factor
+        structure_factor_matrix = np.dot(self.k_list, np.transpose(positions))
+        structure_factor = np.dot(np.exp(-1j * structure_factor_matrix), charges)
+
+        # calculates the squared absolute value of the structural factor and k
+        abssq_structure_factor = np.multiply(np.conj(structure_factor), structure_factor)
+        abssq_k_list = np.dot(self.k_list,np.transpose(self.k_list))
+
+        # instead of iterating a for loop, calculating with matrix
+        potexp = np.divide(np.exp(-np.multiply(abssq_k_list, self.std ** 2 / (float)(2))), abssq_k_list)
+        coulomb_long_potential_matrix = np.multiply(potexp, abssq_structure_factor)
+        coulomb_long_potential = np.sum(coulomb_long_potential_matrix) / (float)(self.volume * epsilon_0)
+
+        '''
+        # first implementation with loops
+        coulomb_long_potential = 0
+
+        for kiteration in range(0, self.k_list.shape[1]):
+            potexp = np.exp(-(self.std ** 2 * abssq_k_list[kiteration]) / (float)(2)) / (float) (abssq_k_list[kiteration])
+            coulomb_long_potential = coulomb_long_potential + abssq_structure_factor[kiteration] * potexp
+
+        coulomb_long_potential = coulomb_long_potential / (float) (self.volume * epsilon_0)
+        '''
+
+        # calculates the self-interaction potential
+        self_energy = np.sum(np.array(charges) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
+
+        # computes the total long range potential
+        coulomb_long_potential = coulomb_long_potential - self_energy
+
+        return coulomb_long_potential
     
     def compute_forces(self,Positions,R, Labels,L):
         Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels,L)
@@ -96,7 +149,7 @@ class  coulomb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the short-range-Force acting upon Particle i componentwise. 
 
         '''
-        K = self.LinComb(self.n_boxes_short_range)
+        K = self.__LinComb(self.n_boxes_short_range)
         K[:,0] *=L[0]
         K[:,1] *=L[1]
         K[:,2] *=L[2]
