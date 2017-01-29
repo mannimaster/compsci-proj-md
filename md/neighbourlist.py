@@ -4,9 +4,7 @@ class neighbourlist(object):
         raise NotImplementedError('You cannot create a neighbourlist object, just use the classmethods')
         return
     """
-    def __init__(self, R, box_length):
-        self.R = R
-        self.box_length = box_length
+    def __init__(self):
         return
 
 
@@ -30,13 +28,19 @@ class neighbourlist(object):
 
         Returns
         -------
+        neighbors : list of touples of all pairs
+            with i.e. distance < r_cutoff is returned.
+        OR:
         neighbors : dictionary of list
             For each particle the list of its neighbors
             (i.e. distance < r_cutoff) are returned.
         """
         import numpy as np
+        """
         from collections import defaultdict 
         neighbors = defaultdict(list)
+        """
+        neighbors = []
         N, dim = np.shape(R)
         # assume same size in all 3 dimensions (i.e. L = L_x, L_y, L_z)
         # divide simulation box into small cells of equal size r_c >= r_cutoff
@@ -90,9 +94,12 @@ class neighbourlist(object):
                             while(j != -1):
                                 # Avoid double counting of pair (i, j)
                                 if (i<j):
-                                    if (np.linalg.norm(R[i]-R[j]+r_shift) <= r_cutoff):
+                                    if (np.linalg.norm(R[i]-(R[j]+r_shift)) <= r_cutoff):
+                                        """
                                         neighbors[i].append(j)
                                         neighbors[j].append(i)
+                                        """
+                                        neighbors += [(i,j)]
                                         
 
                                 j = cllist[j]
