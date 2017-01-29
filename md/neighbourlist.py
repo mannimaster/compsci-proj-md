@@ -1,12 +1,7 @@
 class neighbourlist(object):
-    """
-    def __init__(self):
-        raise NotImplementedError('You cannot create a neighbourlist object, just use the classmethods')
-        return
-    """
-    def __init__(self):
-        return
 
+    def __init__(self):
+        return
 
     def compute_neighbourlist(self, R, box_length, r_cutoff):
         # computeneighbourlist
@@ -28,83 +23,78 @@ class neighbourlist(object):
 
         Returns
         -------
-        neighbors : list of touples of all pairs
-            with i.e. distance < r_cutoff is returned.
-        OR:
         neighbors : dictionary of list
             For each particle the list of its neighbors
             (i.e. distance < r_cutoff) are returned.
         """
-        import numpy as np
-        """
-        from collections import defaultdict 
-        neighbors = defaultdict(list)
-        """
-        neighbors = []
-        N, dim = np.shape(R)
-        # assume same size in all 3 dimensions (i.e. L = L_x, L_y, L_z)
-        # divide simulation box into small cells of equal size r_c >= r_cutoff
-        n_boxes = np.int(box_length / r_cutoff)
-        r_c = box_length / n_boxes 
 
-        head = [-1] * n_boxes**3
+        import numpy as np
+        from collections import defaultdict 
+
+        neighbors = defaultdict(list)
+        N, dim = np.shape(R)
+        # assume same size in all N dimensions
+        n_cells = np.int(box_length / r_cutoff)
+        # divide simulation box into small cells of equal size r_c >= r_cutoff
+        r_c = box_length / n_cells 
+
+        #define head and list 
+        head = [-1] * n_cells**3
         cllist = [-1] * N
         for i in range(0, N):
-            # box index of particle by its position
-            x = np.int(R[i][0] / r_c)
-            y = np.int(R[i][1] / r_c)
-            z = np.int(R[i][2] / r_c)
-            ind_vec = np.int(box_length / r_c)
-            box_index = x*ind_vec*ind_vec + y*ind_vec + z
-            cllist[i] = head[box_index]
-            # The last one goes to the head
-            head[box_index] = i
+          # cell index of particle by its position
+          x = np.int(R[i][0] / r_c)
+          y = np.int(R[i][1] / r_c)
+          z = np.int(R[i][2] / r_c)
+          ind_vec = np.int(box_length / r_c)
+          cell_index = x*ind_vec*ind_vec + y*ind_vec + z
+          cllist[i] = head[cell_index]
+          # The last one goes to the head
+          head[cell_index] = i
 
 
-
+        # For all cells: Look for neighbors within neighboring cells
         for x in range(ind_vec):
-         for y in range(ind_vec):
-          for z in range(ind_vec):
-            box_index = x*ind_vec*ind_vec + y*ind_vec + z
-            # Scan the neighbor boxes (including itself) of box c 
-            nb = np.empty(dim)
-            r_shift = np.empty(dim)
-            for nb[0] in [x-1, x, x+1]:
+          for y in range(ind_vec):
+            for z in range(ind_vec):
+              cell = x*ind_vec*ind_vec + y*ind_vec + z
+
+              nb = np.empty(dim)
+              r_shift = np.empty(dim)
+              # Scan the neighboring cells (including itself)
+              for nb[0] in [x-1, x, x+1]:
                 for nb[1] in [y-1, y, y+1]:
-                    for nb[2] in [z-1, z, z+1]:
-                        # Shift image position of simulation box?
-                        for d in range(dim):
-                            if (nb[d] < 0):
-                                r_shift[d] = -box_length
-                            elif (nb[d]>=ind_vec):
-                                r_shift[d] = box_length
-                            else:
-                                r_shift[d] = 0.0
+                  for nb[2] in [z-1, z, z+1]:
+                    # Shift image position of simulation box?
+                    for d in range(dim):
+                      if (nb[d] < 0):
+                        r_shift[d] = -box_length
+                      elif (nb[d]>=ind_vec):
+                        r_shift[d] = box_length
+                      else:
+                        r_shift[d] = 0.0
                         
-                        
-                        # Calculate box index of neighbor box # % pulls index back into appr. range
-                        c1 = np.int(((nb[0]+ind_vec)%ind_vec) * ind_vec*ind_vec + ((nb[1]+ind_vec)%ind_vec) * ind_vec + ((nb[2]+ind_vec)%ind_vec))
+                    # Calculate cell index nbcell of neighbor cell
+                    nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
+                                + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
+                                + ((nb[2]+ind_vec)%ind_vec))
+                    # where % pulls index back into appr. range
 
-
-                        # Scan particle i in cell box_index
-                        i = head[box_index]
-                        while(i != -1):
-                            # Scan particle j in cell c1
-                            j = head[c1]
-                            while(j != -1):
-                                # Avoid double counting of pair (i, j)
-                                if (i<j):
-                                    if (np.linalg.norm(R[i]-(R[j]+r_shift)) <= r_cutoff):
-                                        """
-                                        neighbors[i].append(j)
-                                        neighbors[j].append(i)
-                                        """
-                                        neighbors += [(i,j)]
-                                        
-
-                                j = cllist[j]
-                            i = cllist[i]
+                    # Scan particle i in cell 
+                    i = head[cell]
+                    while(i != -1):
+                      # Scan particle j in cell nbcell
+                      j = head[nbcell]
+                      while(j != -1):
+                        # Avoid double counting of pair (i, j)
+                        if (i<j):
+                          # dist of i, j smaller than cutoff?
+                          if (np.linalg.norm(R[i]-(R[j]+r_shift)) <= r_cutoff):
+                            neighbors[i].append(j)
+                            neighbors[j].append(i)
                                     
-            
 
+                        j = cllist[j]
+                      i = cllist[i]
+                                    
         return neighbors
