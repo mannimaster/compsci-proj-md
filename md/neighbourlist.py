@@ -29,9 +29,10 @@ class neighbourlist(object):
         """
 
         import numpy as np
-        from collections import defaultdict 
-
-        neighbors = defaultdict(list)
+        #from collections import defaultdict 
+        #neighbors = defaultdict(list)
+        neighbors = {}
+        distances = {}
         N, dim = np.shape(R)
         # assume same size in all N dimensions
         n_cells = np.int(box_length / r_cutoff)
@@ -42,6 +43,9 @@ class neighbourlist(object):
         head = [-1] * n_cells**3
         cllist = [-1] * N
         for i in range(0, N):
+          #empty list of neighbors
+          neighbors[i] = []
+          distances[i] = []
           # cell index of particle by its position
           x = np.int(R[i][0] / r_c)
           y = np.int(R[i][1] / r_c)
@@ -89,12 +93,15 @@ class neighbourlist(object):
                         # Avoid double counting of pair (i, j)
                         if (i<j):
                           # dist of i, j smaller than cutoff?
-                          if (np.linalg.norm(R[i]-(R[j]+r_shift)) <= r_cutoff):
+                          dist = np.linalg.norm(R[i]-(R[j]+r_shift))
+                          if (dist <= r_cutoff):
                             neighbors[i].append(j)
+                            distances[i].append(dist)
                             neighbors[j].append(i)
+                            distances[j].append(dist)
                                     
 
                         j = cllist[j]
                       i = cllist[i]
                                     
-        return neighbors
+        return neighbors, distances

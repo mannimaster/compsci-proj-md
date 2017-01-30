@@ -30,10 +30,10 @@ def test_neighborlist():
     box_length=1.0
     r_cutoff=0.1
    
-    from collections import defaultdict 
-    naiveneighbors = defaultdict(list)
+    naiveneighbors = {}
     dx = np.empty(3)
     for i in range(N):
+        naiveneighbors[i] = []
         for j in range(N):
             d = 0.0
             for x in range(3):
@@ -45,7 +45,8 @@ def test_neighborlist():
 
                 d += dx[x]**2
             
-            if (np.sqrt(d) <= r_cutoff):
+            d = np.sqrt(d)
+            if (d <= r_cutoff):
                 if (i>j):
                     naiveneighbors[i].append(j)
                     naiveneighbors[j].append(i)
@@ -54,6 +55,6 @@ def test_neighborlist():
     from neighbourlist import neighbourlist as nbl
     n2 = naiveneighbors
     n_inst = nbl()
-    n1 = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
+    n1, dist = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
     for i in range(N): 
       assert n1[i].sort() == n2[i].sort()
