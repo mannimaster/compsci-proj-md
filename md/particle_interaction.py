@@ -56,22 +56,19 @@ class  coulomb(__particle_interaction):
         return
 
 
-    def compute_potential(self,charges,positions, variance, labels, n_particles, neighbors, distances):
-        return self.__short_range_potential(variance, labels, n_particles, neighbors, distances) + self.__long_range_potential(charges,positions)
+    def compute_potential(self,charges,positions, labels, n_particles, neighbors, distances):
+        return self.__short_range_potential(labels, n_particles, neighbors, distances) + self.__long_range_potential(charges,positions)
 
 
-    def __short_range_potential(self, variance, labels, n_particles, neighbors, distances):#distances should have the same format/order as the neighborlist
+    def __short_range_potential(self, labels, n_particles, neighbors, distances):#distances should have the same format/order as the neighborlist
         """
         PROTOTYP coulomb
-        __short_range_potential(self, positions,  variance, labels, n_particles, neighbors, distances,)
+        __short_range_potential(self, positions,  labels, n_particles, neighbors, distances,)
 
         Calculates the short range coulomb potential using a neighbor list.
 
         Parameters
         ----------
-        variance : float, scalar number
-            variance of the erfc
-
         labels : np.array
             first column the masses, second the charge
 
@@ -94,7 +91,7 @@ class  coulomb(__particle_interaction):
         for i in neighbors:
             for j,absDistance in zip(neighbors[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
                 #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
-                shortPotential[i] += labels[j,1]/absDistance*scsp.erfc(absDistance/(np.sqrt(2)*variance))               #calculating and summing the short range coulomb potential
+                shortPotential[i] += labels[j,1]/absDistance*scsp.erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
         shortPotential *= self.constant
         # use from super the result of neighbourlist
         return shortPotential
