@@ -225,7 +225,7 @@ class md(object):
         self._forces = xyz        
 
         
-        
+    # work in progress    
     def get_potential(self):
         """Compute the potential for the current configuration of the System
         
