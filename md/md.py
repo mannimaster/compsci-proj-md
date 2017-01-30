@@ -49,6 +49,7 @@ class System(object):
         q[:self.n*self.Coefficients[0]] = self.Charges[0]
         for j in np.arange((np.size(self.Coefficients)-1)):
             q[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = self.Charges[j+1]
+        q *= 1.6021766208e-19 #Correcting Unit, 1 --> C
 
 
         index = np.zeros(np.size(self.Symbols))

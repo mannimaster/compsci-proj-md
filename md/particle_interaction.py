@@ -40,6 +40,7 @@ class  coulomb(__particle_interaction):
     def __init__(self,std, n_boxes_short_range,L, k_max_long_range, k_cut ):
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
+        self.constant = 1 / (8 * np.pi * scco.epsilon_0)                                                                #prefactor for the short range potential/forces
 
         #L is a vector with the orthorombic-boxlength in all dimensions,
         #self.volume = np.prod(np.array(L))
@@ -56,14 +57,45 @@ class  coulomb(__particle_interaction):
         return 
 
 
-    def compute_potential(self,charges,positions):
-        return self.__short_range_potential() + self.__long_range_potential(charges,positions)
+    def compute_potential(self,charges,positions, labels, n_particles, neighbors, distances):
+        return self.__short_range_potential(labels, n_particles, neighbors, distances) + self.__long_range_potential(charges,positions)
 
 
-    def __short_range_potential(self):
-        # do anything
+    def __short_range_potential(self, labels, n_particles, neighbors, distances):#distances should have the same format/order as the neighborlist
+        """
+        PROTOTYP coulomb
+        __short_range_potential(self, positions,  labels, n_particles, neighbors, distances,)
+
+        Calculates the short range coulomb potential using a neighbor list.
+
+        Parameters
+        ----------
+        labels : np.array
+            first column the masses, second the charge
+
+        n_particles : integer
+            number of particles
+
+        neighbors : dictionary of lists
+            all neighbors within given cutoff radius + skin radius
+
+        distances : like neighbors
+            All distances of all neighbors within given cutoff radius + skin radius. The position of the distance in the list is the same as its index in neighbors.
+
+        Returns
+        -------
+        shortPotential : 1D np.array
+            ..the short range potential at the position of each particle. The potentials within the array are in the same order as the positions in the positions array.
+        """
+        shortPotential = np.zeros(n_particles,dtype=float)
+
+        for i in neighbors:
+            for j,absDistance in zip(neighbors[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
+                #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
+                shortPotential[i] += labels[j,1]/absDistance*scsp.erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
+        shortPotential *= self.constant
         # use from super the result of neighbourlist
-        return 0
+        return shortPotential
 
 
     def __long_range_potential(self,charges,positions):
@@ -158,13 +190,15 @@ class  coulomb(__particle_interaction):
         N = np.size(Positions[:,0])
         Force_short_range = np.zeros((N,3))
         k = np.size(K[:,0])
-        charges = np.zeros((N,3))
-        charges[:,0]=Labels[:,1]  
-        charges[:,1]=Labels[:,1] 
-        charges[:,2]=Labels[:,1] 
+        charges_pre_delete = np.zeros((N,3))
+        charges_pre_delete[:,0]=Labels[:,1]  
+        charges_pre_delete[:,1]=Labels[:,1] 
+        charges_pre_delete[:,2]=Labels[:,1] 
         for i in np.arange(N):
 
-            dists_single_cell = Positions[i,:]-Positions
+            dists_single_cell_pre_delete = Positions[i,:]-Positions
+            dists_single_cell = np.delete(dists_single_cell_pre_delete,i,0)
+            charges = np.delete(charges_pre_delete,i,0)
             #This Skript paralellizes the sum over j and executes the sum over vectors n within the loop
             for j in np.arange(k):
                 dists = dists_single_cell+K[j]
@@ -172,11 +206,11 @@ class  coulomb(__particle_interaction):
                 norm_dists = np.linalg.norm(dists)
 
                 Force_short_range[i,:] += np.sum(charges*dists/norm_dists**2 
-                *( erfc( dists/np.sqrt(2)/self.std )/norm_dists 
+                *( erfc( norm_dists/np.sqrt(2)/self.std )/norm_dists 
                 + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* charges /(8*np.pi*epsilon_0)
+        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*epsilon_0)
         return Force_short_range
 
 
@@ -240,13 +274,52 @@ class  coulomb(__particle_interaction):
 class lennard_jones(__particle_interaction):
 
     def __init__(self):
+        self.constant = 1 / (8 * np.pi * scco.epsilon_0)                                                                #prefactor for the short range potential/forces
         return
 
 
-    def compute_potential(self,positions,sigma,epsilon):
-        # do anything
-        # use from super the result of neighbourlist
-        return None
+    def compute_potential(self, sigma, epsilon, labels, n_particles, distances, neighbors):
+        """
+        PROTOTYP Lennard Jones
+        potentialShort(self, sigma, epsilon, labels, n_particles, distances, neighbors)
+
+        Calculates the short range Lennard Jones potential using a neighbor list.
+
+        Parameters
+        ----------
+        labels : np.array
+            first column the masses, second the charge
+
+        n_particles : integer
+            number of particles
+
+        neighbors : dictionary of lists
+            all neighbors within given cutoff radius + skin radius
+
+        distances : like neighbors
+            All distances of all neighbors within given cutoff radius + skin radius. The position of the distance in the list is the same as its index in neighbors.
+
+        sigma : 1 dim np.array, float
+            Contains the sigmas for the Lennard Jones potential.
+
+        epsilon : 1 dim np.array, float
+            Contains the epsilons of the Lennard Jones potential
+
+        Returns
+        -------
+        shortPotentialC : 1D np.array
+            ..the short range potential at the position of each particle. The potentials within the array are in the same order as the positions in the positions array.
+        """
+
+        shortPotentialL = np.zeros(n_particles,dtype=float)
+
+        for i in neighbors:
+            for j,absDistance in zip(neighbors[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
+                #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
+                sigmaPoSix = (sigma[labels[i,2]+labels[j,2]]/absDistance)**6                                            #precalulating the sixth power
+                shortPotentialL[i] += 4*epsilon[labels[i,2]+labels[j,2]]*(sigmaPoSix**2-sigmaPoSix)                      #calculating and summing the Lennard Jones potential
+        shortPotentialL *= self.constant
+        return shortPotentialL
 
 
     def compute_forces(self,Positions,R,Sigma, Epsilon, Labels,L, switch_parameter, r_switch):

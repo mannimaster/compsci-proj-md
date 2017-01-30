@@ -43,12 +43,13 @@ class dynamics(object):
             std, 
             n_boxes_short_range,
             L,
-            k_max_long_range, k_cut ).compute_forces(
+            k_max_long_range, 
+            k_cut ).compute_forces(
             Positions_new, 
             R, 
             Labels,
             L)+lennard_jones(
-        ).compute_forces(
+            ).compute_forces(
             Positions_new,
             R,
             Sigma, 
