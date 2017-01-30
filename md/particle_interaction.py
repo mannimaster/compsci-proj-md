@@ -30,14 +30,14 @@ class __particle_interaction(object):
     # @ MARCO
     # yes this works in the child classes, but it is not necessary like this; you just can call it directly, as you do
     # not any calculations, just call another function.
-    @classmethod
-    def __LinComb(self,n):
+
+    def LinComb(self,n):
         return directions(n).get_directions()
 
 class  coulomb(__particle_interaction):
 
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
+    def __init__(self,std, n_boxes_short_range,L, k_max_long_range, k_cut ):
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
         self.constant = 1 / (8 * np.pi * scco.epsilon_0)                                                                #prefactor for the short range potential/forces
@@ -48,12 +48,13 @@ class  coulomb(__particle_interaction):
         #L is a given number representing the boxlength in each direstion of a cubic box
         self.volume = L ** 3
 
-        #in dependency of k_max and the box length L all linear combination are computed
+        #in dependency of k_max_long_range and the box length L all linear combination are computed
+        lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
         #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
-        n_k = np.floor(np.sqrt((k_max_long_range **2 * L ** 2) / (float)(12 * np.pi ** 2)))
-        lincomb_k = directions(n_k).get_directions()
-        self.k_list = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0) * 2 * np.pi / (float)(L)
-        return
+        lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
+        #all k-vectors (rows) that are longer than k_cut are deleted
+        self.k_list = np.delete(lincomb_k, (np.where(np.sqrt(sum(np.transpose(lincomb_k**2))) > k_cut)), axis=0)
+        return 
 
 
     def compute_potential(self,charges,positions, labels, n_particles, neighbors, distances):
@@ -150,7 +151,7 @@ class  coulomb(__particle_interaction):
         return coulomb_long_potential
     
     def compute_forces(self,Positions,R, Labels,L):
-        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels,L)
+        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels)
         return Coulumb_forces
 
     
@@ -181,7 +182,7 @@ class  coulomb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the short-range-Force acting upon Particle i componentwise. 
 
         '''
-        K = self.__LinComb(self.n_boxes_short_range)
+        K = self.LinComb(self.n_boxes_short_range)
         K[:,0] *=L[0]
         K[:,1] *=L[1]
         K[:,2] *=L[2]
@@ -213,7 +214,7 @@ class  coulomb(__particle_interaction):
         return Force_short_range
 
 
-    def __long_range_forces(self,Positions,Labels,L):
+    def __long_range_forces(self,Positions,Labels):
         ''' Calculate the Force resulting from the long range Coulomb interaction between the Particles
 
         Parameters
@@ -226,8 +227,6 @@ class  coulomb(__particle_interaction):
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
             Particle A should have the label 1 and Particle B should have the label 0.
 
-        L:3x1 Array
-            Array containg the Dimensions of the Simulation box
             
 
         Returns
@@ -239,12 +238,8 @@ class  coulomb(__particle_interaction):
         '''
         i = np.complex(0,1)
         
-        # setup k-vector matrix
-        k = self.LinComb(self.k_max_long_range)*(2*np.pi)/L[0]
-        # two k-vectors i,j have property k_i = -k_j respectively, delete one of them and delete k = (0,0,0)
-        k = np.delete(k, (np.arange((np.shape(k)[0]+1)/2)), axis=0)
-        # delete all k-vectors that are longer than cutoff
-        k = np.delete(k, (np.where(np.sqrt(sum(np.transpose(k**2))) > self.k_cut)[0]), axis=0)
+        # two k-vectors i,j have property k_i = -k_j respectively, delete one of them
+        k = np.delete(self.k_list, (np.arange((np.shape(self.k_list)[0])/2)), axis=0)
         
         # setup data needed for calculation
         k_betqua = sum(np.transpose(k**2))          # |k|^2
@@ -272,7 +267,7 @@ class  coulomb(__particle_interaction):
             Force_long_range[h,:] = sum(f_1)   
         
         # get prefactor right                                      
-        Force_long_range *= charges/(L[0]**3*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
+        Force_long_range *= charges/(self.volume*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
         return Force_long_range
 
 

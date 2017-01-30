@@ -42,9 +42,9 @@ class dynamics(object):
         Forces_new = coulomb(
             std, 
             n_boxes_short_range,
-            k_max_long_range,
-            k_cut
-            ).compute_forces(
+            L,
+            k_max_long_range, 
+            k_cut ).compute_forces(
             Positions_new, 
             R, 
             Labels,
