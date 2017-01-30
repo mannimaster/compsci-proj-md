@@ -120,7 +120,7 @@ class  coulomb(__particle_interaction):
                 norm_dists = np.linalg.norm(dists)
 
                 Force_short_range[i,:] += np.sum(charges*dists/norm_dists**2 
-                *( erfc( dists/np.sqrt(2)/self.std )/norm_dists 
+                *( erfc( norm_dists/np.sqrt(2)/self.std )/norm_dists 
                 + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        

@@ -15,16 +15,16 @@ Charges = np.array([1.0 ,-1.0])
 N = 10
 
 #Boxsize
-L_x=5.0
-L_y=5.0
-L_z=5.0
+L_x=0.1
+L_y=0.1
+L_z=0.1
 L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 1.5
+r_cut_LJ = 0.05
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 1.5
+r_cut_coulomb = 0.05
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
 p = 10.0
@@ -33,10 +33,10 @@ p = 10.0
 T = 100 # Kelvin 
 
 #Timestep
-dt = 1e-12 # 1 ns
+dt = 1e-3 # 1 ns
 
 #Characetristic coupling time for Thermostat, must be larger than dt
-tau = 1e-10
+tau = 1e-1
 assert tau>dt, "tau must be larger than dt"
 
 # !!!  DO NOT CHANGE THESE LINES  !!!
