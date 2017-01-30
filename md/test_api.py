@@ -56,5 +56,8 @@ def test_neighborlist():
     n2 = naiveneighbors
     n_inst = nbl()
     n1, dist = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
-    for i in range(N): 
-      assert n1[i].sort() == n2[i].sort()
+    for i in range(N):
+      n1[i].sort()
+      n2[i].sort()
+
+    assert n1 == n2

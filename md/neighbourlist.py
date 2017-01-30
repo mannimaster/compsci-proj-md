@@ -66,42 +66,52 @@ class neighbourlist(object):
             nb = np.empty(dim)
             r_shift = np.empty(dim)
             # Scan the neighboring cells (including itself)
-            for nb[0] in [x-1, x, x+1]:
-              for nb[1] in [y-1, y, y+1]:
-                for nb[2] in [z-1, z, z+1]:
-                  # Shift image position of simulation box?
-                  for d in range(dim):
-                    if (nb[d] < 0):
-                      r_shift[d] = -box_length
-                    elif (nb[d]>=ind_vec):
-                      r_shift[d] = box_length
-                    else:
-                      r_shift[d] = 0.0
-                      
-                  # Calculate cell index nbcell of neighbor cell
-                  nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
-                              + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
-                              + ((nb[2]+ind_vec)%ind_vec))
-                  # where % pulls index back into appr. range
+            nb[0] = x-1
+            nb[1] = y-1
+            nb[2] = z-1
+            for nbcell_ind in range(1,3**3+1):
+              if nbcell_ind != 1:
+                    nb[2] += 1
+              if nbcell_ind % 3 == 0:
+                    nb[2] = z-1
+                    nb[1] += 1
+              if nbcell_ind % 9 == 0:
+                    nb[1] = y-1
+                    nb[0] += 1
 
-                  # Scan particle i in cell 
-                  i = head[cell]
-                  while(i != -1):
-                    # Scan particle j in cell nbcell
-                    j = head[nbcell]
-                    while(j != -1):
-                      # Avoid double counting of pair (i, j)
-                      if (i<j):
-                        # dist of i, j smaller than cutoff?
-                        dist = np.linalg.norm(R[i]-(R[j]+r_shift))
-                        if (dist <= r_cutoff):
-                          neighbors[i].append(j)
-                          distances[i].append(dist)
-                          neighbors[j].append(i)
-                          distances[j].append(dist)
-                                    
+              # Shift image position of simulation box?
+              for d in range(dim):
+                if (nb[d] < 0):
+                  r_shift[d] = -box_length
+                elif (nb[d]>=ind_vec):
+                  r_shift[d] = box_length
+                else:
+                  r_shift[d] = 0.0
+                  
+              # Calculate cell index nbcell of neighbor cell
+              nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
+                          + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
+                          + ((nb[2]+ind_vec)%ind_vec))
+              # where % pulls index back into appr. range
 
-                      j = cllist[j]
-                    i = cllist[i]
+              # Scan particle i in cell 
+              i = head[cell]
+              while(i != -1):
+                # Scan particle j in cell nbcell
+                j = head[nbcell]
+                while(j != -1):
+                  # Avoid double counting of pair (i, j)
+                  if (i<j):
+                    # dist of i, j smaller than cutoff?
+                    dist = np.linalg.norm(R[i]-(R[j]+r_shift))
+                    if (dist <= r_cutoff):
+                      neighbors[i].append(j)
+                      distances[i].append(dist)
+                      neighbors[j].append(i)
+                      distances[j].append(dist)
+                                
+
+                  j = cllist[j]
+                i = cllist[i]
                                     
         return neighbors, distances
