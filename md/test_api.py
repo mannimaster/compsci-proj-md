@@ -1,6 +1,6 @@
 #   md - Molecular Dynamics Applied to ionic solids.
 #   Copyright (C) 2017 Nils Harmening, Marco Manni,
-#   Darian Steven Viezzer, Steffi, Hendrik
+#   Darian Steven Viezzer, Steffanie Kieninger, Henrik Narvaez
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -17,6 +17,22 @@
 
 import numpy as np
 from .api import md
+from boxvectors import directions
 
-def test_sor_callable():
-    assert False
+    
+def test_get_dircetions():
+
+        #Create Test Array
+        d = directions(3)
+        K = d.get_directions()
+        #Shift all entries up, to avoid negative entries
+        K += self.n_boxes
+        #define Base
+        base = (2*self.n_boxes+1)
+
+        #Make a test Array
+        K_test = np.zeros(base**3)
+        K_test = K[:,0]*base**2 +K[:,1]*base +K[:,2]
+        assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
+        return "Passed"
+
