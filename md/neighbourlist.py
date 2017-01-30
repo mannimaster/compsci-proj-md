@@ -58,50 +58,50 @@ class neighbourlist(object):
 
 
         # For all cells: Look for neighbors within neighboring cells
-        for x in range(ind_vec):
-          for y in range(ind_vec):
-            for z in range(ind_vec):
-              cell = x*ind_vec*ind_vec + y*ind_vec + z
+        for cell in range(n_cells**3):
+            x = cell/(ind_vec*ind_vec)
+            y = (cell/ind_vec) % ind_vec
+            z = cell % ind_vec
 
-              nb = np.empty(dim)
-              r_shift = np.empty(dim)
-              # Scan the neighboring cells (including itself)
-              for nb[0] in [x-1, x, x+1]:
-                for nb[1] in [y-1, y, y+1]:
-                  for nb[2] in [z-1, z, z+1]:
-                    # Shift image position of simulation box?
-                    for d in range(dim):
-                      if (nb[d] < 0):
-                        r_shift[d] = -box_length
-                      elif (nb[d]>=ind_vec):
-                        r_shift[d] = box_length
-                      else:
-                        r_shift[d] = 0.0
-                        
-                    # Calculate cell index nbcell of neighbor cell
-                    nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
-                                + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
-                                + ((nb[2]+ind_vec)%ind_vec))
-                    # where % pulls index back into appr. range
+            nb = np.empty(dim)
+            r_shift = np.empty(dim)
+            # Scan the neighboring cells (including itself)
+            for nb[0] in [x-1, x, x+1]:
+              for nb[1] in [y-1, y, y+1]:
+                for nb[2] in [z-1, z, z+1]:
+                  # Shift image position of simulation box?
+                  for d in range(dim):
+                    if (nb[d] < 0):
+                      r_shift[d] = -box_length
+                    elif (nb[d]>=ind_vec):
+                      r_shift[d] = box_length
+                    else:
+                      r_shift[d] = 0.0
+                      
+                  # Calculate cell index nbcell of neighbor cell
+                  nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
+                              + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
+                              + ((nb[2]+ind_vec)%ind_vec))
+                  # where % pulls index back into appr. range
 
-                    # Scan particle i in cell 
-                    i = head[cell]
-                    while(i != -1):
-                      # Scan particle j in cell nbcell
-                      j = head[nbcell]
-                      while(j != -1):
-                        # Avoid double counting of pair (i, j)
-                        if (i<j):
-                          # dist of i, j smaller than cutoff?
-                          dist = np.linalg.norm(R[i]-(R[j]+r_shift))
-                          if (dist <= r_cutoff):
-                            neighbors[i].append(j)
-                            distances[i].append(dist)
-                            neighbors[j].append(i)
-                            distances[j].append(dist)
+                  # Scan particle i in cell 
+                  i = head[cell]
+                  while(i != -1):
+                    # Scan particle j in cell nbcell
+                    j = head[nbcell]
+                    while(j != -1):
+                      # Avoid double counting of pair (i, j)
+                      if (i<j):
+                        # dist of i, j smaller than cutoff?
+                        dist = np.linalg.norm(R[i]-(R[j]+r_shift))
+                        if (dist <= r_cutoff):
+                          neighbors[i].append(j)
+                          distances[i].append(dist)
+                          neighbors[j].append(i)
+                          distances[j].append(dist)
                                     
 
-                        j = cllist[j]
-                      i = cllist[i]
+                      j = cllist[j]
+                    i = cllist[i]
                                     
         return neighbors, distances
