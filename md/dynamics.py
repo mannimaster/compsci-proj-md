@@ -21,7 +21,8 @@ class dynamics(object):
                                      n_boxes_short_range,
                                      k_max_long_range,
                                      switch_parameter, 
-                                     r_switch):
+                                     r_switch,
+                                     k_cut):
         ''' The Verlocity Verlet Integrator
         '''
         
@@ -41,7 +42,8 @@ class dynamics(object):
         Forces_new = coulomb(
             std, 
             n_boxes_short_range,
-            k_max_long_range ).compute_forces(
+            L,
+            k_max_long_range, k_cut ).compute_forces(
             Positions_new, 
             R, 
             Labels,
@@ -109,7 +111,8 @@ class dynamics(object):
                          p_rea,
                          T,
                          switch_parameter, 
-                         r_switch):
+                         r_switch,
+                         k_cut):
         
         """Propagates the System using Velocity Verlet Integrator and Andersen Thermostat"""
         
@@ -127,7 +130,8 @@ class dynamics(object):
             n_boxes_short_range,
             k_max_long_range, 
             switch_parameter, 
-            r_switch )
+            r_switch,
+            k_cut)
         
         # Update Trajectory frame, Positions and Velocites
         Positions_new   

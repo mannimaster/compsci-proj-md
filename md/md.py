@@ -177,7 +177,7 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,k_max_long_range, k_cut)
+        self.coulomb = coulomb(std, n_boxes_short_range,box[0], k_max_long_range, k_cut,)
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
@@ -224,8 +224,23 @@ class md(object):
     def forces(self,xyz):
         self._forces = xyz        
 
-    
-      
+        
+        
+    def get_potential(self):
+        """Compute the potential for the current configuration of the System
+        
+        Potential_total = Potential_Coulomb + Potential_Lennard_Jones
+        
+        Returns
+        ..........
+        
+        Forces : float
+            Number containg the Potential of the system with N particels 
+        """        
+        Potential = self.coulomb.compute_potential(charges = self.labels[:,1],
+                                                   positions = self.positions)
+        
+        return Potential
     
 
     
