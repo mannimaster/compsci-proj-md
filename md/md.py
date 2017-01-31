@@ -49,6 +49,7 @@ class System(object):
         q[:self.n*self.Coefficients[0]] = self.Charges[0]
         for j in np.arange((np.size(self.Coefficients)-1)):
             q[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = self.Charges[j+1]
+        q *= 1.6021766208e-19 #Correcting Unit, 1 --> C
 
 
         index = np.zeros(np.size(self.Symbols))
@@ -177,7 +178,7 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,k_max_long_range, k_cut)
+        self.coulomb = coulomb(std, n_boxes_short_range,box[0], k_max_long_range, k_cut,)
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
@@ -224,8 +225,23 @@ class md(object):
     def forces(self,xyz):
         self._forces = xyz        
 
-    
-      
+        
+    # work in progress    
+    def get_potential(self):
+        """Compute the potential for the current configuration of the System
+        
+        Potential_total = Potential_Coulomb + Potential_Lennard_Jones
+        
+        Returns
+        ..........
+        
+        Forces : float
+            Number containg the Potential of the system with N particels 
+        """        
+        Potential = self.coulomb.compute_potential(charges = self.labels[:,1],
+                                                   positions = self.positions)
+        
+        return Potential
     
 
     
