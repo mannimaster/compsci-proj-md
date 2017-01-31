@@ -17,24 +17,24 @@
 
 import numpy as np
 from .api import md
-from boxvectors import directions
 
     
 def test_get_dircetions():
+    from boxvectors import directions
+    #Create Test Array
+    d = directions(3)
+    K = d.get_directions()
+    #Shift all entries up, to avoid negative entries
+    n_boxes = 3
+    K += n_boxes
+    #define Base
+    base = (2*n_boxes+1)
 
-        #Create Test Array
-        d = directions(3)
-        K = d.get_directions()
-        #Shift all entries up, to avoid negative entries
-        K += self.n_boxes
-        #define Base
-        base = (2*self.n_boxes+1)
-
-        #Make a test Array
-        K_test = np.zeros(base**3)
-        K_test = K[:,0]*base**2 +K[:,1]*base +K[:,2]
-        assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
-        return "Passed"
+    #Make a test Array
+    K_test = np.zeros(base**3)
+    K_test = K[:,0]*base**2 +K[:,1]*base +K[:,2]
+    assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
+    return "Passed"
 
 
 
