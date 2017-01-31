@@ -40,7 +40,7 @@ class  coulomb(__particle_interaction):
     def __init__(self,std, n_boxes_short_range,L, k_max_long_range, k_cut ):
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
-        self.constant = 1 / (8 * np.pi * scco.epsilon_0)                                                                #prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
 
         #L is a vector with the orthorombic-boxlength in all dimensions,
         #self.volume = np.prod(np.array(L))
@@ -274,7 +274,7 @@ class  coulomb(__particle_interaction):
 class lennard_jones(__particle_interaction):
 
     def __init__(self):
-        self.constant = 1 / (8 * np.pi * scco.epsilon_0)                                                                #prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
         return
 
 
