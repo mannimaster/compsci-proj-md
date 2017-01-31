@@ -36,3 +36,42 @@ def test_get_dircetions():
         assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
         return "Passed"
 
+
+
+def test_neighborlist():
+    N = 100
+    R=np.random.rand(N,3)
+    box_length=1.0
+    r_cutoff=0.1
+   
+    naiveneighbors = {}
+    dx = np.empty(3)
+    for i in range(N):
+        naiveneighbors[i] = []
+        for j in range(N):
+            d = 0.0
+            for x in range(3):
+                dx[x] = R[i][x]-R[j][x]
+                if (dx[x] < -box_length/2):
+                    dx[x] += box_length
+                elif (dx[x] > box_length/2):
+                    dx[x] -= box_length
+
+                d += dx[x]**2
+            
+            d = np.sqrt(d)
+            if (d <= r_cutoff):
+                if (i>j):
+                    naiveneighbors[i].append(j)
+                    naiveneighbors[j].append(i)
+
+   
+    from neighbourlist import neighbourlist as nbl
+    n2 = naiveneighbors
+    n_inst = nbl()
+    n1, dist = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
+    for i in range(N):
+      n1[i].sort()
+      n2[i].sort()
+
+    assert n1 == n2
