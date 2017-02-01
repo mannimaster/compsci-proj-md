@@ -10,7 +10,7 @@ from md import System
 from md import md
 from distribution import maxwellboltzmann
 import matplotlib.pyplot as plt
-get_ipython().magic(u'matplotlib inline')
+#get_ipython().magic(u'matplotlib inline')
 
 
 # In[ ]:
@@ -77,6 +77,7 @@ MD = md(
     n_boxes_coulomb, 
     k_max, 
     dt, 
-    p_rea)
+    p_rea,
+    k_cut)
 MD.forces = MD.get_forces()
 
