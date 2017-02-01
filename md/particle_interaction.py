@@ -27,6 +27,10 @@ class __particle_interaction(object):
     def compute_forces(self):
         raise NotImplementedError('The method is not implemented for the abstract class')
 
+    @abstractmethod
+    def compute_energy(self):
+        raise NotImplementedError('The method is not implemented for the abstract class')
+
     # @ MARCO
     # yes this works in the child classes, but it is not necessary like this; you just can call it directly, as you do
     # not any calculations, just call another function.
@@ -35,9 +39,22 @@ class __particle_interaction(object):
         return directions(n).get_directions()
 
 class  coulomb(__particle_interaction):
+    '''
+    class to compute coulomb interaction
+    the class offers methods to calculate
+        potentials
+        total energy
+        forces
+    '''
 
+    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
+        '''
+        creates a coloumb object with properties that do not change over time
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range, k_cut ):
+        description is missing
+
+        '''
+
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
         self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
@@ -97,20 +114,158 @@ class  coulomb(__particle_interaction):
         # use from super the result of neighbourlist
         return shortPotential
 
-
     def __long_range_potential(self,charges,positions):
 
         ''' Calculate the Long Range Potential
 
                 Parameters
                 ---------------
-                charges: 1 x N array
+                charges: N x 1 Array
                     Array with the charge of each particle. The index+1 indicates the particle number. However the order
                     is not important.
 
                 positions: N x 3 Array
                     Array with N rows, where each row represents the position of the particle with the same index
 
+                Returns
+                --------------
+                vector : N x 1 Array
+                    Array with the potential at each particle position
+        '''
+
+        # initializes all necessary arrays, which will be reused
+        matrix = np.zeros((self.k_list.shape[1],len(positions)))
+        vector = np.zeros(self.k_list.shape[1])
+        return_vector = np.zeros(positions.shape[1])
+
+        # compute 1 x K vector of |k|^2 =
+        #
+        # [
+        # k11^2 + k21^2 + k31^2 ,
+        # k12^2 + k22^2 + k32^2 ,
+        # k13^2 + k23^2 + k33^2 ,
+        # ...
+        # ]
+        # with ki = (k1i k2i k3i)
+        # each row is like going through k
+
+        vector = np.sum(np.square(self.k_list), axis = 1)
+
+        # compute 1 x K vector of the Gaussian part exp(-sigma^2 * |k|^2) / |k|^2
+        #
+        # [
+        # exp(-sigma^2 * (k11^2 + k21^2 + k31^2)) / (k11^2 + k21^2 + k31^2) ,
+        # exp(-sigma^2 * (k12^2 + k22^2 + k32^2)) / (k12^2 + k22^2 + k32^2) ,
+        # exp(-sigma^2 * (k13^2 + k23^2 + k33^2)) / (k13^2 + k23^2 + k33^2) ,
+        # ...
+        # ]
+        # with ki = (k1i k2i k3i)
+        # each row is like going through k
+
+        vector = np.divide(np.exp(-np.multiply(vector, self.std ** 2 / (float)(2))), vector)
+
+        # compute K x R matrix of the scalar <k,r> =
+        #
+        # [
+        # [k1r1, k1r2, k1r3, ...] ,
+        # [k2r1, k2r2, k2r3, ...] ,
+        # [k3r1, k3r2, k3r3, ...] ,
+        # [...]
+        # ]
+        # with ri = (rxi, ryi, rzi) and ki = (k1i k2i k3i)
+        # going through the rows is like going through the k values
+        # going through the columns is like going through the positions r
+
+        matrix = np.dot(self.k_list, np.transpose(positions))
+
+        # compute 1 x K vector of the elementwise product of the Gaussian part and the structural factor {elementwise product}
+        #
+        # [
+        # k1r1q1 + k1r2q2 + k1r3q3 + ... ,
+        # k2r1q1 + k2r2q2 + k2r3q3 + ... ,
+        # k3r1q1 + k3r2q2 + k3r3q3 + ... ,
+        # ...
+        # ]
+        #
+        # *
+        #
+        # [
+        # (exp(-sigma^2 * (k11^2 + k21^2 + k31^2)) / (k11^2 + k21^2 + k31^2)) * (k1r1q1 + k1r2q2 + k1r3q3 + ...) ,
+        # (exp(-sigma^2 * (k12^2 + k22^2 + k32^2)) / (k12^2 + k22^2 + k32^2)) * (k2r1q1 + k2r2q2 + k2r3q3 + ...) ,
+        # (exp(-sigma^2 * (k13^2 + k23^2 + k33^2)) / (k13^2 + k23^2 + k33^2)) * (k3r1q1 + k3r2q2 + k3r3q3 + ...) ,
+        # ...
+        # ]
+        # with ki = (k1i k2i k3i) and qi = [q1, q2, q3, ...]
+        # each row is like going through k
+
+        vector = np.multiply(vector, np.dot(np.exp(-1j * matrix), charges))
+
+        # compute 1 x R vector of the potential phi = transpose[matrix] * elementwise product {inner product}
+        #
+        # [
+        # [k1r1, k2r1, k3r1, ...] ,
+        # [k1r2, k2r2, k3r2, ...] ,
+        # [k1r3, k2r3, k3r3, ...] ,
+        # [...]
+        # ]
+        #
+        # *
+        #
+        # [
+        # (exp(-sigma^2 * (k11^2 + k21^2 + k31^2)) / (k11^2 + k21^2 + k31^2)) * (k1r1q1 + k1r2q2 + k1r3q3 + ...) ,
+        # (exp(-sigma^2 * (k12^2 + k22^2 + k32^2)) / (k12^2 + k22^2 + k32^2)) * (k2r1q1 + k2r2q2 + k2r3q3 + ...) ,
+        # (exp(-sigma^2 * (k13^2 + k23^2 + k33^2)) / (k13^2 + k23^2 + k33^2)) * (k3r1q1 + k3r2q2 + k3r3q3 + ...) ,
+        # ...
+        # ]
+        #
+        # =
+        #
+        # [
+        # matrix[0,0] * vector[0] + matrix[0,1] * vector[1] + matrix[0,2] * vector[2] + ...
+        # matrix[1,0] * vector[0] + matrix[1,1] * vector[1] + matrix[1,2] * vector[2] + ...
+        # matrix[2,0] * vector[0] + matrix[2,1] * vector[1] + matrix[2,2] * vector[2] + ...
+        # ]
+
+        return_vector = np.dot(np.exp(1j*np.transpose(matrix)), vector)
+        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * epsilon_0))
+
+        return return_vector
+
+    def compute_energy(self,charges,positions):
+
+        ''' Calculate the total coloumb energy
+
+                Parameters
+                ---------------
+                charges: N x 1 Vector
+                    Vector with the charge of each particle. The index indicates the particle number.
+
+                positions: N x 3 Array
+                    Array with N rows, where each row represents the position of the particle with the same index
+
+                Returns
+                --------------
+                total energy : float
+                    float value of the total coloumb energy
+        '''
+
+        return self.__short_range_energy() + self.__long_range_energy(charges,positions)
+
+    def __short_range_energy(self):
+        #do anything
+        return 0
+
+    def __long_range_energy(self,charges,positions):
+
+        ''' Calculate the total long range energy of the system
+
+                Parameters
+                ---------------
+                charges: N x 1 Vector
+                    Vector with the charge of each particle. The index indicates the particle number.
+
+                positions: N x 3 Array
+                    Array with N rows, where each row represents the position of the particle with the same index
 
                 Returns
                 --------------
@@ -118,40 +273,23 @@ class  coulomb(__particle_interaction):
                     float value of the total long range potential
         '''
 
-        # computes the structural factor
-        structure_factor_matrix = np.dot(self.k_list, np.transpose(positions))
-        structure_factor = np.dot(np.exp(-1j * structure_factor_matrix), charges)
-
-        # calculates the squared absolute value of the structural factor and k
-        abssq_structure_factor = np.multiply(np.conj(structure_factor), structure_factor)
-        abssq_k_list = np.dot(self.k_list,np.transpose(self.k_list))
-
-        # instead of iterating a for loop, calculating with matrix
-        potexp = np.divide(np.exp(-np.multiply(abssq_k_list, self.std ** 2 / (float)(2))), abssq_k_list)
-        coulomb_long_potential_matrix = np.multiply(potexp, abssq_structure_factor)
-        coulomb_long_potential = np.sum(coulomb_long_potential_matrix) / (float)(self.volume * epsilon_0)
-
-        '''
-        # first implementation with loops
-        coulomb_long_potential = 0
-
-        for kiteration in range(0, self.k_list.shape[1]):
-            potexp = np.exp(-(self.std ** 2 * abssq_k_list[kiteration]) / (float)(2)) / (float) (abssq_k_list[kiteration])
-            coulomb_long_potential = coulomb_long_potential + abssq_structure_factor[kiteration] * potexp
-
-        coulomb_long_potential = coulomb_long_potential / (float) (self.volume * epsilon_0)
-        '''
+        #calculates the long range potential
+        long_range_potential = self.__long_range_potential(charges,positions)
 
         # calculates the self-interaction potential
         self_energy = np.sum(np.array(charges) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
 
-        # computes the total long range potential
-        coulomb_long_potential = coulomb_long_potential - self_energy
+        return 0.5 * np.sum(np.multiply(long_range_potential,charges)) - self_energy
 
-        return coulomb_long_potential
-    
     def compute_forces(self,Positions,R, Labels,L):
+        '''
+
+        please add here description
+
+        '''
+        
         Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels)
+
         return Coulumb_forces
 
     
@@ -321,6 +459,9 @@ class lennard_jones(__particle_interaction):
         shortPotentialL *= self.constant
         return shortPotentialL
 
+    def compute_energy(self):
+        #do anything
+        return 0
 
     def compute_forces(self,Positions,R,Sigma, Epsilon, Labels,L, switch_parameter, r_switch):
         ''' Calculate the Force resulting from the lennard Jones Interaction between the Particles
