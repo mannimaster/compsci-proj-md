@@ -1,11 +1,13 @@
 package:
   name: md-dev
-  version: {{ GIT_DESCRIBE_TAG+ '+' +GIT_BUILD_STR }}
+  version: {{ environ.get('GIT_DESCRIBE_TAG', '') }}
 source:
   path: ../..
 
 build:
   preserve_egg_dir: True
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  string: {{ environ.get('GIT_BUILD_STR', '') }}
 
 requirements:
   build:
