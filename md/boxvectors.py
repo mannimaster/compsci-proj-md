@@ -25,20 +25,3 @@ class directions(object):
         K -= self.n_boxes             # make sure that highest possible coefficient is nnumber of boxes in one direction
         return K
     
-    def test_get_dircetions(self):
-
-        #Create Test Array
-        K = self.get_directions()
-        #Shift all entries up, to avoid negative entries
-        K += self.n_boxes
-        #define Base
-        base = (2*self.n_boxes+1)
-
-        #Make a test Array
-        K_test = np.zeros(base**3)
-        K_test = K[:,0]*base**2 +K[:,1]*base +K[:,2]
-        assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
-        return "Passed"
-
-
-

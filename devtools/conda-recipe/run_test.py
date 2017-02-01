@@ -24,7 +24,6 @@ print("args:", pytest_args)
 res = pytest.main(pytest_args)
 
 # copy it to home, so we can process it with codecov etc.
-shutil.copy('coverage.xml', os.path.expanduser('~/md/'))
-
+shutil.copy('coverage.xml', os.path.expanduser('~/compsci-proj-md/'))
 
 sys.exit(res)
