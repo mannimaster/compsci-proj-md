@@ -2,9 +2,9 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from boxvectors import directions as directions
 from neighbourlist import neighbourlist
 import numpy as np
-from scipy.special import erf
 from scipy.special import erfc
 from scipy.constants import epsilon_0
+import time
 
 class __particle_interaction(object):
 
@@ -47,7 +47,7 @@ class  coulomb(__particle_interaction):
         forces
     '''
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
+    def __init__(self,std, n_boxes_short_range, L, positions, R, Labels, p, **kwargs):
         '''
         creates a coloumb object with properties that do not change over time
 
@@ -55,9 +55,13 @@ class  coulomb(__particle_interaction):
 
         '''
 
+        # if s input epsilon0 = any number is given, then this will be used otherwise it will be used the
+        # self.epsilon0 from the scipy package in SI (8.85.. * 10^-12 Vm/As)
+        self.epsilon0 = kwargs.pop('epsilon0', epsilon_0)
+
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
-        self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * self.epsilon0)                                                                #prefactor for the short range potential/forces
 
         #L is a vector with the orthorombic-boxlength in all dimensions,
         #self.volume = np.prod(np.array(L))
@@ -65,14 +69,51 @@ class  coulomb(__particle_interaction):
         #L is a given number representing the boxlength in each direstion of a cubic box
         self.volume = L ** 3
 
+        self.R_cut, self.K_cut = self.__compute_optimal_cutoff(positions, R, Labels, L, p)
+
         #in dependency of k_max_long_range and the box length L all linear combination are computed
-        lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
+        lincomb_k = directions((int)(np.ceil(self.K_cut * L / (2 * np.pi)))).get_directions() * (2 * np.pi / L)
         #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
         lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
         #all k-vectors (rows) that are longer than k_cut are deleted
-        self.k_list = np.delete(lincomb_k, (np.where(np.sqrt(sum(np.transpose(lincomb_k**2))) > k_cut)), axis=0)
-        return 
+        self.k_list = np.delete(lincomb_k, (np.where(np.sqrt(sum(np.transpose(lincomb_k**2))) > self.K_cut)), axis=0)
+        return
 
+    def __compute_optimal_cutoff(self, Positions, R, Labels, L, p):
+        '''
+
+        :param Positions:
+        :param R:
+        :param Labels:
+        :param L:
+        :param p:
+        :return:
+        '''
+
+        start_time = time.time()
+        self.__short_range_forces(Positions, R, Labels, L)
+        T_r = time.time() - start_time
+
+        start_time = time.time()
+        self.__long_range_forces(Positions, Labels)
+        T_k = time.time() - start_time
+
+        factor = 8 * Positions.shape[1] ** 2 * (L/2) ** 2 * np.pi**3 / (self.volume ** 2 * (p/L) ** 3)
+
+        R_opt_cut = (p / np.pi) ** 0.5 *(factor * T_k / T_r) ** (1/6) * L / Positions.shape[1] ** (1/6)
+        K_opt_cut = 2 * p / R_opt_cut
+
+        return (R_opt_cut, K_opt_cut)
+
+    @property
+    def cutoff(self):
+        '''
+        Returns:  touple of floats
+        -------
+         optimal cutoff radius
+         optimal cutoff in reciprocal space
+        '''
+        return (self.R_cut, self.K_cut)
 
     def compute_potential(self,charges,positions, labels, n_particles, neighbors, distances):
         return self.__short_range_potential(labels, n_particles, neighbors, distances) + self.__long_range_potential(charges,positions)
@@ -134,7 +175,7 @@ class  coulomb(__particle_interaction):
         '''
 
         # initializes all necessary arrays, which will be reused
-        matrix = np.zeros((self.k_list.shape[1],len(positions)))
+        matrix = np.zeros((self.k_list.shape[1],positions.shape[1]))
         vector = np.zeros(self.k_list.shape[1])
         return_vector = np.zeros(positions.shape[1])
 
@@ -227,9 +268,10 @@ class  coulomb(__particle_interaction):
         # ]
 
         return_vector = np.dot(np.exp(1j*np.transpose(matrix)), vector)
-        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * epsilon_0))
+        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * self.epsilon0))
 
-        return return_vector
+        #the imaginary part is neither useful nor usable
+        return np.real(return_vector)
 
     def compute_energy(self,charges,positions):
 
@@ -277,9 +319,10 @@ class  coulomb(__particle_interaction):
         long_range_potential = self.__long_range_potential(charges,positions)
 
         # calculates the self-interaction potential
-        self_energy = np.sum(np.array(charges) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
+        self_energy = np.sum(np.array(charges) ** 2) / (float)(2 * self.epsilon0 * self.std * np.power(2 * np.pi, 1.5))
 
         return 0.5 * np.sum(np.multiply(long_range_potential,charges)) - self_energy
+
 
     def compute_forces(self,Positions,R, Labels,L):
         '''
@@ -348,7 +391,7 @@ class  coulomb(__particle_interaction):
                 + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*epsilon_0)
+        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*self.epsilon0)
         return Force_short_range
 
 
@@ -405,14 +448,18 @@ class  coulomb(__particle_interaction):
             Force_long_range[h,:] = sum(f_1)   
         
         # get prefactor right                                      
-        Force_long_range *= charges/(self.volume*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
+        Force_long_range *= charges/(self.volume*self.epsilon0)*2      # multiply by 2 because of symmetry properties of sine
         return Force_long_range
 
 
 class lennard_jones(__particle_interaction):
 
-    def __init__(self):
-        self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
+    def __init__(self,**kwargs):
+        # if s input epsilon0 = any number is given, then this will be used otherwise it will be used the
+        # epsilon_0 from the scipy package in SI (8.85.. * 10^-12 Vm/As)
+        self.epsilon0 = kwargs.pop('epsilon0', epsilon_0)
+
+        self.constant = 1 / (8 * np.pi * self.epsilon0)                                                                #prefactor for the short range potential/forces
         return
 
 

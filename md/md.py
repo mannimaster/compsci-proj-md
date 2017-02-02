@@ -90,68 +90,6 @@ class System(object):
     
 class md(object):
 
-    '''
-    Initializes the md object.
-
-    Parameters
-        ----------
-        
-        positions: Nx3 Array 
-            Array with N rows and 3 columns. Contains the Positions of each Particle component wise
-            
-        R : Nx1 Array 
-            Array with N rows and 1 column. Contains the euclidic distances of each particle to the coordinate origin. 
-            
-        properties : Nx3 Array
-            The number of rows represents the number of prticles
-            The columns represent the properties [q, m, label]
-            q = particle charge
-            m = particle mass
-            label = number to identify the type of atom
-            
-        velocities : Nx3 Array
-            Array with N rows and 3 columns. Contains the Velocites of each Particle component wise
-            
-        box : 3xArray
-           Array containing the lengths of the edges of the box. 
-            
-        Temperature : float
-            Temperature of the System in Kelvin.
-            
-        std : int 
-            Standart deviation of the Gauss Distribution, used in the Ewald Summation
-            
-        Sigma_LJ : Array
-            Contains the Lennard Jones Parameter sigma for each interaction pair
-        
-        Epsilon_LJ : Array
-             Contains the Lennard Jones Parameter epsilon for each interaction pair
-             
-        switch_parameter : 4x1 Array
-            Contains the values of the parameters used in the switch polynomial
-        
-        r_switch: float
-            Radius where the switch funtion is applied
-        
-        n_boxes_short_range: int
-            Number of Boxes to consider for the short ranged interactions
-        
-        k_max_long_range: int
-            Upper limit for any entry of any vektor k of the reciprocal space
-        
-        dt: int
-            Timestep of the Simulation
-            
-        k_cut: float
-            Cutoff-radius in reciprocal space
-        
-        p_rea: float
-             Reassingment probability. Denotes the coupling strength to the thermostat. It is the probability with which a particle will undergo a velocity reassignment. 
-
-    Returns
-    -------
-        nothing
-    '''
     def __init__(self, 
                  positions,
                  R,
@@ -166,10 +104,69 @@ class md(object):
                  switch_parameter, 
                  r_switch,
                  n_boxes_short_range, 
-                 k_max_long_range, 
+                 p_error,
                  dt,
-                 p_rea,
-                 k_cut):
+                 p_rea):
+        '''
+           Initializes the md object.
+
+           Parameters
+               ----------
+
+               positions: Nx3 Array
+                   Array with N rows and 3 columns. Contains the Positions of each Particle component wise
+
+               R : Nx1 Array
+                   Array with N rows and 1 column. Contains the euclidic distances of each particle to the coordinate origin.
+
+               properties : Nx3 Array
+                   The number of rows represents the number of prticles
+                   The columns represent the properties [q, m, label]
+                   q = particle charge
+                   m = particle mass
+                   label = number to identify the type of atom
+
+               velocities : Nx3 Array
+                   Array with N rows and 3 columns. Contains the Velocites of each Particle component wise
+
+               box : 3xArray
+                  Array containing the lengths of the edges of the box.
+
+               Temperature : float
+                   Temperature of the System in Kelvin.
+
+               std : int
+                   Standart deviation of the Gauss Distribution, used in the Ewald Summation
+
+               Sigma_LJ : Array
+                   Contains the Lennard Jones Parameter sigma for each interaction pair
+
+               Epsilon_LJ : Array
+                    Contains the Lennard Jones Parameter epsilon for each interaction pair
+
+               switch_parameter : 4x1 Array
+                   Contains the values of the parameters used in the switch polynomial
+
+               r_switch: float
+                   Radius where the switch funtion is applied
+
+               n_boxes_short_range: int
+                   Number of Boxes to consider for the short ranged interactions
+
+               p_error: float
+                   exp(-p) equals the accepted error tolerance
+
+               dt: int
+                   Timestep of the Simulation
+
+               p_rea: float
+                    Reassingment probability. Denotes the coupling strength to the thermostat. It is the probability with which a particle will undergo a velocity reassignment.
+
+           Returns
+           -------
+               nothing
+           '''
+
         #check input parameters
         self.positions=positions
         self.R=R
@@ -178,7 +175,6 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,box[0], k_max_long_range, k_cut,)
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
@@ -187,11 +183,8 @@ class md(object):
         self.dt = dt
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
-        self.k_max_long_range = k_max_long_range
         self.p_rea = p_rea
-        self.k_cut = k_cut
-     
-        #return
+        self.coulomb = coulomb(std, n_boxes_short_range, box[0], positions, R, properties, p)
         return
     
     @property
@@ -296,12 +289,10 @@ class md(object):
             self.L,
             self.std, 
             self.n_boxes_short_range,
-            self.k_max_long_range,
             self.p_rea,
             self.T,
             self.switch_parameter, 
             self.r_switch,
-            self.k_cut
         )
         return Positions, Velocities, Forces
     
