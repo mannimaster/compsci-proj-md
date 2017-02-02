@@ -21,10 +21,10 @@ L_z=0.1
 L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 0.05
+r_cut_LJ = 0.07
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 0.05
+r_cut_coulomb = 0.07
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
 p = 10.0
