@@ -62,4 +62,10 @@ n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
 #largest values of k to consider for long range Potential
 k_max_long_range = int(np.floor((k_cut*L[0])/(2*np.pi)))
 
+#switch-parameter for Lennard-Jones-Forces
+switch_parameter = np.array([1,-1,0,0])
+
+#distance where the switch-function kicks in (Lennard-Jones-Forces)
+r_switch = 1.5
+
 

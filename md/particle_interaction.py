@@ -73,7 +73,7 @@ class  coulomb(__particle_interaction):
 
 
     def compute_potential(self,labels,positions, neighbours, distances):
-        return self.__short_range_potential(labels, neighbours, distances) + self.__long_range_potential(labels,positions)
+        return self.__short_range_potential(labels, neighbours, distances) + self.__long_range_potential(labels[:,1],positions)
 
 
     def __short_range_potential(self, labels, neighbours, distances):#distances should have the same format/order as the neighborlist
@@ -113,7 +113,7 @@ class  coulomb(__particle_interaction):
         # use from super the result of neighbourlist
         return shortPotential
 
-    def __long_range_potential(self,labels,positions):
+    def __long_range_potential(self,charges,positions):
 
         ''' Calculate the Long Range Potential
 
@@ -132,7 +132,6 @@ class  coulomb(__particle_interaction):
                     Array with the potential at each particle position
         '''
         
-        charges = labels[:,1]
         # initializes all necessary arrays, which will be reused
         matrix = np.zeros((self.k_list.shape[1],len(positions)))
         vector = np.zeros(self.k_list.shape[1])
@@ -295,7 +294,7 @@ class  coulomb(__particle_interaction):
         '''
         
         #calculates the long range potential
-        long_range_potential = self.__long_range_potential(labels,positions)
+        long_range_potential = self.__long_range_potential(labels[:,1],positions)
 
         # calculates the self-interaction potential
         self_energy = np.sum(np.array(labels[:,1]) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
