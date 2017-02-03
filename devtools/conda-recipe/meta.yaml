@@ -16,6 +16,7 @@ requirements:
 
   run:
     - python
+    - scipy
     - numpy x.x
 
 test:
