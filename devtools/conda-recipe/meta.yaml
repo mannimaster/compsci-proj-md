@@ -16,8 +16,9 @@ requirements:
 
   run:
     - python
-    - scipy
     - numpy x.x
+    - scipy
+    - matplotlib
 
 test:
   requires:
