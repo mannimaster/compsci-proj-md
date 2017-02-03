@@ -108,10 +108,8 @@ class  coulomb(__particle_interaction):
 
         for i in neighbors:
             for j,absDistance in zip(neighbors[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
-                #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
-                shortPotential[i] += labels[j,1]/absDistance*scsp.erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
+                shortPotential[i] += labels[j,1]/absDistance*erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
         shortPotential *= self.constant
-        # use from super the result of neighbourlist
         return shortPotential
 
     def __long_range_potential(self,charges,positions):
