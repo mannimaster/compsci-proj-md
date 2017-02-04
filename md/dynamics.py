@@ -2,6 +2,7 @@ import numpy as np
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
 from distribution import maxwellboltzmann
+from neighbourlist import neighbourlist
 
 class dynamics(object):
 
@@ -22,12 +23,14 @@ class dynamics(object):
                                      k_max_long_range,
                                      switch_parameter, 
                                      r_switch,
-                                     k_cut):
+                                     k_cut,
+                                     r_cut_coulomb):
         ''' The Verlocity Verlet Integrator
         '''
         
         N = np.size(Positions[:,0])
         R = np.sqrt(np.sum(Positions**2,1))
+        
 
         Forces_old = Forces
 
@@ -37,14 +40,16 @@ class dynamics(object):
         Positions_new[:,0] = Positions_new[:,0]%L[0]
         Positions_new[:,1] = Positions_new[:,1]%L[1]
         Positions_new[:,2] = Positions_new[:,2]%L[2]
-
+        
+        #Compute neighbourlist
+        neighbours, distances = neighbourlist().compute_neighbourlist(Positions_new, L[0], r_cut_coulomb)
         
         Forces_new = coulomb(
             std, 
             n_boxes_short_range,
             L,
             k_max_long_range, 
-            k_cut ).compute_forces(
+            k_cut).compute_forces(
             Positions_new, 
             R, 
             Labels,
@@ -57,7 +62,8 @@ class dynamics(object):
             Labels,
             L, 
             switch_parameter, 
-            r_switch)
+            r_switch,
+            neighbours)
         
         Velocities_new = Velocities + (Forces_old+Forces_new)/(2*(np.outer(Labels[:,0],np.ones(3))))*dt
 
@@ -109,11 +115,12 @@ class dynamics(object):
                          std, 
                          n_boxes_short_range,
                          k_max_long_range,
+                         switch_parameter,
                          p_rea,
-                         T,
-                         switch_parameter, 
+                         T, 
                          r_switch,
-                         k_cut):
+                         k_cut,
+                         r_cut_coulomb):
         
         """Propagates the System using Velocity Verlet Integrator and Andersen Thermostat"""
         
@@ -132,7 +139,8 @@ class dynamics(object):
             k_max_long_range, 
             switch_parameter, 
             r_switch,
-            k_cut)
+            k_cut,
+            r_cut_coulomb)
         
         # Update Trajectory frame, Positions and Velocites
         Positions_new   
