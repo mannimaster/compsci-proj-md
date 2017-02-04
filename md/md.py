@@ -3,6 +3,7 @@ Class for the Molecular Dynamics Simulation
 '''
 import numpy as np
 import PSE
+from neighbourlist import neighbourlist
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
 from dynamics import dynamics
@@ -169,7 +170,8 @@ class md(object):
                  k_max_long_range, 
                  dt,
                  p_rea,
-                 k_cut):
+                 k_cut,
+                 r_cut_coulomb):
         #check input parameters
         self.positions=positions
         self.R=R
@@ -178,7 +180,7 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,box[0], k_max_long_range, k_cut,)
+        self.coulomb = coulomb(std, n_boxes_short_range,box, k_max_long_range, k_cut)
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
@@ -190,7 +192,8 @@ class md(object):
         self.k_max_long_range = k_max_long_range
         self.p_rea = p_rea
         self.k_cut = k_cut
-     
+        self.r_cut_coulomb = r_cut_coulomb
+        self.neighbours, self.distances= neighbourlist().compute_neighbourlist(positions, box[0], r_cut_coulomb)
         #return
         return
     
@@ -223,9 +226,35 @@ class md(object):
         return self._forces    
     @forces.setter
     def forces(self,xyz):
-        self._forces = xyz        
-
+        self._forces = xyz 
         
+    @property
+    def potential(self):
+        return self._potential  
+    
+    @potential.setter
+    def potential(self,xyz):
+        self._potential = xyz
+    
+    
+    def get_neighbourlist(self):
+        """Compute the neighbourlist according to r_cut_coulomb and given configuration 
+       
+        
+        Returns
+        ..........
+        
+        neighbours: cell-linked list
+            list at entry i contains all neighbours of particle i within cutoff-radius
+        distances: cell-linked list
+            list at entry i contains the distances to all neighbours of particle i within cutoff-radius
+        """  
+        neighbours, distances = neighbourlist().compute_neighbourlist(self.positions, self.L[0], self.r_cut_coulomb)
+        return neighbours, distances
+    
+    
+    
+    
     # work in progress    
     def get_potential(self):
         """Compute the potential for the current configuration of the System
@@ -238,12 +267,36 @@ class md(object):
         Forces : float
             Number containg the Potential of the system with N particels 
         """        
-        Potential = self.coulomb.compute_potential(charges = self.labels[:,1],
-                                                   positions = self.positions)
+        Potential = self.lennard_jones.compute_potential(sigma = self.Sigma_LJ,
+                                                         epsilon = self.Epsilon_LJ, 
+                                                         labels = self.labels,
+                                                         neighbours = self.neighbours,
+                                                         distances = self.distances)+(
+        self.coulomb.compute_potential(labels = self.labels,
+                                       positions = self.positions,
+                                       neighbours = self.neighbours,
+                                       distances = self.distances))
         
         return Potential
     
-
+    
+    def get_energy(self):
+        
+        Energy = self.lennard_jones.compute_energy(sigma = self.Sigma_LJ,
+                                                   epsilon = self.Epsilon_LJ,
+                                                   labels = self.labels,
+                                                   neighbours = self.neighbours,
+                                                   distances = self.distances)+(
+        self.coulomb.compute_energy(labels = self.labels,
+                                    positions = self.positions, 
+                                    neighbours = self.neighbours, 
+                                    distances = self.distances))
+        return Energy
+    
+    
+    
+    
+    
     
     def get_forces(self):
         """Compute the forces for the current configuration of the System
@@ -263,7 +316,8 @@ class md(object):
                                                    Labels =self.labels, 
                                                    L =self.L, 
                                                    switch_parameter = self.switch_parameter, 
-                                                   r_switch = self.r_switch)+(
+                                                   r_switch = self.r_switch,
+                                                   neighbours = self.neighbours)+(
         self.coulomb.compute_forces(Positions =self.positions,
                                       R = self.R,
                                       Labels = self.labels,
@@ -297,12 +351,12 @@ class md(object):
             self.std, 
             self.n_boxes_short_range,
             self.k_max_long_range,
+            self.switch_parameter,
             self.p_rea,
-            self.T,
-            self.switch_parameter, 
+            self.T, 
             self.r_switch,
-            self.k_cut
-        )
+            self.k_cut,
+            self.r_cut_coulomb)
         return Positions, Velocities, Forces
     
     def get_Temperature(self):

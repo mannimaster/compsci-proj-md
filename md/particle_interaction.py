@@ -37,6 +37,8 @@ class __particle_interaction(object):
 
     def LinComb(self,n):
         return directions(n).get_directions()
+    
+
 
 class  coulomb(__particle_interaction):
     '''
@@ -47,7 +49,7 @@ class  coulomb(__particle_interaction):
         forces
     '''
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut ):
+    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut):
         '''
         creates a coloumb object with properties that do not change over time
 
@@ -57,28 +59,24 @@ class  coulomb(__particle_interaction):
 
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
-        self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
-
-        #L is a vector with the orthorombic-boxlength in all dimensions,
-        #self.volume = np.prod(np.array(L))
-
-        #L is a given number representing the boxlength in each direstion of a cubic box
-        self.volume = L ** 3
+        self.constant = 1 / (8 * np.pi * epsilon_0)        # prefactor for the short range potential/forces
+        self.volume = L[0] ** 3                            # Volume of box
 
         #in dependency of k_max_long_range and the box length L all linear combination are computed
         lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
         #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
         lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
         #all k-vectors (rows) that are longer than k_cut are deleted
-        self.k_list = np.delete(lincomb_k, (np.where(np.sqrt(sum(np.transpose(lincomb_k**2))) > k_cut)), axis=0)
+        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > k_cut)), axis=0)
+        
         return 
 
 
-    def compute_potential(self,charges,positions, labels, n_particles, neighbors, distances):
-        return self.__short_range_potential(labels, n_particles, neighbors, distances) + self.__long_range_potential(charges,positions)
+    def compute_potential(self,labels,positions, neighbours, distances):
+        return self.__short_range_potential(labels, neighbours, distances) + self.__long_range_potential(labels[:,1],positions)
 
 
-    def __short_range_potential(self, labels, n_particles, neighbors, distances):#distances should have the same format/order as the neighborlist
+    def __short_range_potential(self, labels, neighbours, distances):#distances should have the same format/order as the neighborlist
         """
         PROTOTYP coulomb
         __short_range_potential(self, positions,  labels, n_particles, neighbors, distances,)
@@ -104,12 +102,13 @@ class  coulomb(__particle_interaction):
         shortPotential : 1D np.array
             ..the short range potential at the position of each particle. The potentials within the array are in the same order as the positions in the positions array.
         """
+        n_particles = np.shape(labels)[0]
         shortPotential = np.zeros(n_particles,dtype=float)
 
-        for i in neighbors:
-            for j,absDistance in zip(neighbors[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
+        for i in neighbours:
+            for j,absDistance in zip(neighbours[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
                 #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
-                shortPotential[i] += labels[j,1]/absDistance*scsp.erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
+                shortPotential[i] += labels[j,1]/absDistance*erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
         shortPotential *= self.constant
         # use from super the result of neighbourlist
         return shortPotential
@@ -132,7 +131,7 @@ class  coulomb(__particle_interaction):
                 vector : N x 1 Array
                     Array with the potential at each particle position
         '''
-
+        
         # initializes all necessary arrays, which will be reused
         matrix = np.zeros((self.k_list.shape[1],len(positions)))
         vector = np.zeros(self.k_list.shape[1])
@@ -229,9 +228,9 @@ class  coulomb(__particle_interaction):
         return_vector = np.dot(np.exp(1j*np.transpose(matrix)), vector)
         return_vector = np.multiply(return_vector, 1 / (float)(self.volume * epsilon_0))
 
-        return return_vector
+        return return_vector.real
 
-    def compute_energy(self,charges,positions):
+    def compute_energy(self,labels,positions, neighbours, distances):
 
         ''' Calculate the total coloumb energy
 
@@ -249,13 +248,34 @@ class  coulomb(__particle_interaction):
                     float value of the total coloumb energy
         '''
 
-        return self.__short_range_energy() + self.__long_range_energy(charges,positions)
+        return self.__short_range_energy(labels, neighbours, distances) + self.__long_range_energy(labels,positions)
 
-    def __short_range_energy(self):
-        #do anything
-        return 0
+    def __short_range_energy(self, labels, neighbours, distances):
+        
+        ''' Calculate the total short range energy of the system
 
-    def __long_range_energy(self,charges,positions):
+                Parameters
+                ---------------
+                charges: N x 1 Vector
+                    Vector with the charge of each particle. The index indicates the particle number.
+
+                positions: N x 3 Array
+                    Array with N rows, where each row represents the position of the particle with the same index
+
+                Returns
+                --------------
+                coulomb_short_energy : float
+                    float value of the total long range energy
+        '''
+
+        #calculates the short range potential
+        short_range_potential = self.__short_range_potential(labels, neighbours, distances)
+
+        return 0.5 * np.sum(np.multiply(short_range_potential,labels[:,1]))
+    
+    
+
+    def __long_range_energy(self,labels,positions):
 
         ''' Calculate the total long range energy of the system
 
@@ -269,17 +289,17 @@ class  coulomb(__particle_interaction):
 
                 Returns
                 --------------
-                coulomb_long_potential : float
-                    float value of the total long range potential
+                coulomb_long_energy : float
+                    float value of the total long range energy
         '''
-
+        
         #calculates the long range potential
-        long_range_potential = self.__long_range_potential(charges,positions)
+        long_range_potential = self.__long_range_potential(labels[:,1],positions)
 
         # calculates the self-interaction potential
-        self_energy = np.sum(np.array(charges) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
+        self_energy = np.sum(np.array(labels[:,1]) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
 
-        return 0.5 * np.sum(np.multiply(long_range_potential,charges)) - self_energy
+        return 0.5 * np.sum(np.multiply(long_range_potential,labels[:,1])) - self_energy
 
     def compute_forces(self,Positions,R, Labels,L):
         '''
@@ -374,13 +394,12 @@ class  coulomb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the long-range-Force acting upon Particle i componentwise. 
 
         '''
-        i = np.complex(0,1)
         
         # two k-vectors i,j have property k_i = -k_j respectively, delete one of them
         k = np.delete(self.k_list, (np.arange((np.shape(self.k_list)[0])/2)), axis=0)
         
         # setup data needed for calculation
-        k_betqua = sum(np.transpose(k**2))          # |k|^2
+        k_betqua = np.sum(np.square(k), axis = 1)   # |k|^2
         num_k = np.shape(k_betqua)[0]               # number of k-vectors
         num_Par = np.shape(Positions)[0]            # number of particles
         f_1 = np.zeros((num_k,3))                   # placeholder for Forces during summation over k outside of for second loop
@@ -412,11 +431,11 @@ class  coulomb(__particle_interaction):
 class lennard_jones(__particle_interaction):
 
     def __init__(self):
-        self.constant = 1 / (8 * np.pi * epsilon_0)                                                                #prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * epsilon_0)  #prefactor for the short range potential/forces
         return
 
 
-    def compute_potential(self, sigma, epsilon, labels, n_particles, distances, neighbors):
+    def compute_potential(self, sigma, epsilon, labels, neighbours, distances):
         """
         PROTOTYP Lennard Jones
         potentialShort(self, sigma, epsilon, labels, n_particles, distances, neighbors)
@@ -443,27 +462,44 @@ class lennard_jones(__particle_interaction):
         epsilon : 1 dim np.array, float
             Contains the epsilons of the Lennard Jones potential
 
-        Returns
+            Returns
         -------
         shortPotentialC : 1D np.array
-            ..the short range potential at the position of each particle. The potentials within the array are in the same order as the positions in the positions array.
+                ..the short range potential at the position of each particle. The potentials within the array are in the same order as the positions in the positions array.
         """
-
+        n_particles = np.shape(labels)[0]
         shortPotentialL = np.zeros(n_particles,dtype=float)
 
-        for i in neighbors:
-            for j,absDistance in zip(neighbors[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
+        for i in neighbours:
+            for j,absDistance in zip(neighbours[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
                 #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
-                sigmaPoSix = (sigma[labels[i,2]+labels[j,2]]/absDistance)**6                                            #precalulating the sixth power
-                shortPotentialL[i] += 4*epsilon[labels[i,2]+labels[j,2]]*(sigmaPoSix**2-sigmaPoSix)                      #calculating and summing the Lennard Jones potential
+                sigmaPoSix = (sigma[int(labels[i,2]+labels[j,2])]/absDistance)**6                                            #precalulating the sixth power
+                shortPotentialL[i] += 4*epsilon[int(labels[i,2]+labels[j,2])]*(sigmaPoSix**2-sigmaPoSix)                      #calculating and summing the Lennard Jones potential
         shortPotentialL *= self.constant
         return shortPotentialL
 
-    def compute_energy(self):
-        #do anything
-        return 0
+    def compute_energy(self, sigma, epsilon, labels, neighbours, distances):
+        
+        ''' Calculate the total Lennard-Jones energy
 
-    def compute_forces(self,Positions,R,Sigma, Epsilon, Labels,L, switch_parameter, r_switch):
+                Parameters
+                ---------------
+                ######################
+                add parameters here
+                ###########################
+
+                Returns
+                --------------
+                total energy : float
+                    float value of the total Lennard-Jones energy
+        '''
+        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances)
+
+        return np.sum(np.multiply(energy_LJ,labels[:,0]))
+    
+    
+
+    def compute_forces(self,Positions,R,Sigma, Epsilon, Labels,L, switch_parameter, r_switch, neighbours):
         ''' Calculate the Force resulting from the lennard Jones Interaction between the Particles
 
         Parameters
@@ -499,8 +535,7 @@ class lennard_jones(__particle_interaction):
 
         '''
         #Get Neighbour-List, naive_Dists should be replaced in the future by Nils' Work
-        NB = neighbourlist()
-        Neighbors = NB.naive_Dists(R)
+        
 
         N = np.size(R)
         Force_LJ = np.zeros((N,3))
@@ -518,7 +553,7 @@ class lennard_jones(__particle_interaction):
             Positions_Difference[:,0] = Positions_Difference[:,0]%(L[0]/2)
             Positions_Difference[:,1] = Positions_Difference[:,1]%(L[1]/2)
             Positions_Difference[:,2] = Positions_Difference[:,2]%(L[2]/2)
-            for j in Neighbors[i]:
+            for j in neighbours[i]:
                 #Calculate the Distances 
                 dist = np.linalg.norm(Positions_Difference[j,:])
 
@@ -536,7 +571,7 @@ class lennard_jones(__particle_interaction):
                 else:
                     #This is the derivative of the switch-function, used to cut the LJ-Potential
                     Force_LJ[i,:] += 8.0 *eps[j] *Positions_Difference[i,:] *sig6_dist_ratio*(
-                    (6 /dist**2 (-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1)) 
+                    (6 /dist**2*(-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1)) 
 
-            return Force_LJ
+        return Force_LJ
      
