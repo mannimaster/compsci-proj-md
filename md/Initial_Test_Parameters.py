@@ -32,8 +32,7 @@ assert tau>dt, "tau must be larger than dt"
 
 #labels : first column the masses, second the charge
 labels = np.array(([1, 1, 0], [1, -2, 1], [1, 1, 0]))
-#
-neighbors = {0: [1, 2], 1: [0, 2], 2: [0, 1]}
+neighbours = {0: [1, 2], 1: [0, 2], 2: [0, 1]}
 distances = {0: [np.sqrt(3), np.sqrt(3)], 1: [np.sqrt(3), np.sqrt(3)], 2: [np.sqrt(3), np.sqrt(3)]}
 positions = np.array(([1, 1, 1], [2, 2, 2], [3, 3, 3]))
 sigma     = np.array([1.,1.,1.])

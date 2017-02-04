@@ -16,8 +16,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from .api import md
-
+#from .api import md
+import Initial_Test_Parameters as ip
     
 def test_get_dircetions():
     from boxvectors import directions
@@ -75,3 +75,42 @@ def test_neighborlist():
       n2[i].sort()
 
     assert n1 == n2
+
+
+def test_SymmetriesPotC():
+    #tests coulomb potential function with equidistant charges where the middle one has twice the negativ charge
+    from particle_interaction import coulomb
+
+    potential        = coulomb(ip.std, ip.n_boxes_short_range,ip.L, ip.k_max_long_range, ip.k_cut)
+    result           = potential.compute_potential(positions=ip.positions, labels=ip.labels, neighbours=ip.neighbours, distances=ip.distances)
+    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P3 should be the same."
+    assert ( abs(result[0]/result[1])<0.5+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P2 should be P1*2."
+    assert ( abs(result[2]/result[1])<0.5+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P2 should be P3*2."
+    return
+
+
+def test_SymmetriesPotLJ():
+    #tests LJ Potential for  with equidistant identical charges
+    from particle_interaction import lennard_jones
+
+    potential = lennard_jones()
+    result    = potential.compute_potential(sigma=ip.sigma, epsilon=ip.epsilon, labels=ip.labels, distances=ip.distances, neighbours=ip.neighbours)
+    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P3 should be the same."
+    assert ( abs(result[0]/result[1])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P2 should be the same."
+    assert ( abs(result[2]/result[1])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P3 and P2 should be the same."
+    return
+
+
+def test_SymmetriesPotLJ2():
+    from particle_interaction import lennard_jones
+
+    potential = lennard_jones()
+    result    = potential.compute_potential(sigma=ip.sigma, epsilon=ip.epsilon, labels=ip.labels, distances={0: [np.sqrt(12), np.sqrt(3)], 1: [np.sqrt(12), np.sqrt(12)], 2: [np.sqrt(3), np.sqrt(12)]}, neighbours=ip.neighbours)
+    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P3 should be the same."
+    assert ( result[0]!=result[1] )                , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P2 should not be the same."
+    assert ( result[2]!=result[1] )                , "Potential does not have the symmetrie that the should follow from the particle position and charge. P3 and P2 should not be the same."
+    return
+
+#test_SymmetriesPotC()
+#test_SymmetriesPotLJ()
+#test_SymmetriesPotLJ2()

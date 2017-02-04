@@ -18,7 +18,7 @@ N = 10
 L_x=0.1
 L_y=0.1
 L_z=0.1
-L = np.array([L_x, L_y, L_z])
+#L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
 r_cut_LJ = 0.07
@@ -39,7 +39,16 @@ dt = 1e-3 # 1 ns
 tau = 1e-1
 assert tau>dt, "tau must be larger than dt"
 
-# !!!  DO NOT CHANGE THESE LINES  !!!
+#switch-parameter for Lennard-Jones-Forces
+switch_parameter = np.array([1,-1,0,0])
+
+#distance where the switch-function kicks in (Lennard-Jones-Forces)
+r_switch = 1.5
+
+
+###############################################
+# !!!  DO NOT CHANGE THE FOLLOWING LINES  !!! #
+###############################################
 
 # Summarizing Dimension in one array
 L = np.array([L_x, L_y, L_z])
@@ -62,10 +71,6 @@ n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
 #largest values of k to consider for long range Potential
 k_max_long_range = int(np.floor((k_cut*L[0])/(2*np.pi)))
 
-#switch-parameter for Lennard-Jones-Forces
-switch_parameter = np.array([1,-1,0,0])
 
-#distance where the switch-function kicks in (Lennard-Jones-Forces)
-r_switch = 1.5
 
 
