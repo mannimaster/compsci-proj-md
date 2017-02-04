@@ -600,7 +600,7 @@ class lennard_jones(__particle_interaction):
             Positions_Difference[:,2] = Positions_Difference[:,2]%(L[2]/2)
             for j in neighbours[i]:
                 #Calculate the Distances 
-                dist = np.linalg.norm(Positions_Difference[j,:])
+                dist = np.linalg.norm(Positions_Difference[j,:])  #COMMENT (@skieninger): I think you can use the absolut distances we get from the neighbour list. dist == distances[i][j]
 
                 #Calculate the Value of the switch Function
                 Switch = (switch_parameter[0]+switch_parameter[1]*dist+switch_parameter[2]*dist**2+switch_parameter[3]*dist**3)

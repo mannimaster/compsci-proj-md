@@ -33,12 +33,20 @@ assert tau>dt, "tau must be larger than dt"
 #labels : first column the masses, second the charge
 labels = np.array(([1, 1, 0], [1, -2, 1], [1, 1, 0]))
 neighbours = {0: [1, 2], 1: [0, 2], 2: [0, 1]}
-distances = {0: [np.sqrt(3), np.sqrt(3)], 1: [np.sqrt(3), np.sqrt(3)], 2: [np.sqrt(3), np.sqrt(3)]}
-positions = np.array(([1, 1, 1], [2, 2, 2], [3, 3, 3]))
+distances = {0: [np.sqrt(3.), np.sqrt(3.)], 1: [np.sqrt(3.), np.sqrt(3.)], 2: [np.sqrt(3.), np.sqrt(3.)]}
+positions = np.array(([1., 1., 1.], [2., 2., 2.], [3., 3., 3.]))
 sigma     = np.array([1.,1.,1.])
 epsilon   = np.array([1.,1.,1.])
 
-# !!!  DO NOT CHANGE THESE LINES  !!!
+#switch-parameter for Lennard-Jones-Forces
+switch_parameter = np.array([1,-1,0,0])
+
+#distance where the switch-function kicks in (Lennard-Jones-Forces)
+r_switch = 1.5
+
+###############################################
+# !!!  DO NOT CHANGE THE FOLLOWING LINES  !!! #
+###############################################
 
 # Summarizing Dimension in one array
 L = np.array([L_x, L_y, L_z])
