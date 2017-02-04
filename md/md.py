@@ -310,7 +310,6 @@ class md(object):
             Array containg the Forces that act upon each particle component wise. 
         """
         Forces = self.lennard_jones.compute_forces(Positions =self.positions, 
-                                                   R=self.R, 
                                                    Sigma =self.Sigma_LJ,
                                                    Epsilon = self.Epsilon_LJ, 
                                                    Labels =self.labels, 
@@ -319,7 +318,6 @@ class md(object):
                                                    r_switch = self.r_switch,
                                                    neighbours = self.neighbours)+(
         self.coulomb.compute_forces(Positions =self.positions,
-                                      R = self.R,
                                       Labels = self.labels,
                                       L = self.L) )
         return Forces
