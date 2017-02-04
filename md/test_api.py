@@ -16,7 +16,34 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import Initial_Test_Parameters as ip
+
+from .api import md
+from particle_interaction import coulomb
+import Initial_Parameters as ip
+from md import System
+
+Symbols = ip.Symbols
+Coefficients = ip.Coefficients
+Charges = ip.Charges
+N = ip.N*np.sum(Coefficients)
+std = ip.std
+k_cut = ip.k_cut
+k_max = ip.k_max_long_range
+n_boxes_short_range = ip.n_boxes_short_range
+n_boxes_LJ = ip.n_boxes_LJ
+r_cut_LJ = ip.r_cut_LJ
+r_switch = r_cut_LJ*0.9
+Sys= System(Symbols, Coefficients, Charges, N/2)
+Sigma, Epsilon = Sys.get_LJ_parameter()
+switch_parameter = np.array([0,0,0,0])
+
+Test_Positions = np.array([[1,0,0],
+                           [3,0,0]])
+Test_R = np.linalg.norm(Test_Positions)
+Test_L = np.array([5,5,5])
+Test_Labels = np.array([[1,+1.0,0],
+                        [1,-1.0,1]])
+
     
 def test_get_dircetions():
     from boxvectors import directions
@@ -76,6 +103,7 @@ def test_neighborlist():
     assert n1 == n2
 
 
+
 def test_SymmetriesPotC():
     #tests coulomb potential function with equidistant charges where the middle one has twice the negativ charge
     from particle_interaction import coulomb
@@ -110,6 +138,26 @@ def test_SymmetriesPotLJ2():
     assert ( result[2]!=result[1] )                , "Potential does not have the symmetrie that the should follow from the particle position and charge. P3 and P2 should not be the same."
     return
 
-#test_SymmetriesPotC()
-#test_SymmetriesPotLJ()
-#test_SymmetriesPotLJ2()
+    
+    def test_coulomb_forces():
+        c = coulomb(std,
+                    n_boxes_short_range,
+                    Test_L,
+                    k_max,
+                    k_cut)
+        Force = c.compute_forces(Test_Positions,
+                                 Test_Labels,
+                                 Test_L)
+        assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
+    def test_LJ_range_forces():
+        LJ = lennard_jones()
+        Force = LJ.compute_forces(Test_Positions,
+                                  Sigma,
+                                  Epsilon,
+                                  Test_Labels,
+                                  Test_L,
+                                  switch_parameter,
+                                  r_switch,
+                                  r_cut_LJ)
+        assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
+
