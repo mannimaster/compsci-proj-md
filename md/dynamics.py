@@ -48,7 +48,6 @@ class dynamics(object):
             std, 
             n_boxes_short_range,
             L,
-            k_max_long_range, 
             k_cut).compute_forces(
             Positions_new, 
             Labels,

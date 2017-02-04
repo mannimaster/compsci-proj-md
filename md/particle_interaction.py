@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from boxvectors import directions as directions
 from neighbourlist import neighbourlist
 import numpy as np
+import time
 from scipy.special import erf
 from scipy.special import erfc
 from scipy.constants import epsilon_0
@@ -31,14 +32,6 @@ class __particle_interaction(object):
     def compute_energy(self):
         raise NotImplementedError('The method is not implemented for the abstract class')
 
-    # @ MARCO
-    # yes this works in the child classes, but it is not necessary like this; you just can call it directly, as you do
-    # not any calculations, just call another function.
-
-    def LinComb(self,n):
-        return directions(n).get_directions()
-    
-
 
 class  coulomb(__particle_interaction):
     '''
@@ -49,7 +42,7 @@ class  coulomb(__particle_interaction):
         forces
     '''
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut):
+    def __init__(self,std, n_boxes_short_range, L, k_cut, **kwargs):
         '''
         creates a coloumb object with properties that do not change over time
 
@@ -57,10 +50,14 @@ class  coulomb(__particle_interaction):
 
         '''
 
+        self.epsilon0 = kwargs.pop('epsilon0', epsilon_0)
+
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
         self.constant = 1 / (8 * np.pi * epsilon_0)        # prefactor for the short range potential/forces
         self.volume = L[0] ** 3                            # Volume of box
+
+        k_max_long_range = np.ceil(k_cut * L[0] / (float)(2 * np.pi))
 
         #in dependency of k_max_long_range and the box length L all linear combination are computed
         lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
@@ -71,6 +68,34 @@ class  coulomb(__particle_interaction):
         
         return 
 
+    def compute_optimal_cutoff(self, Positions, Labels, L, p_error):
+
+        R_cut = (L / (float)(2))
+        K_cut = 2 * p_error / (float)(R_cut)
+
+        start_time = time.time()
+        self.__short_range_forces(Positions, Labels, L)
+        T_r = time.time() - start_time
+
+        start_time = time.time()
+        self.__long_range_forces(Positions, Labels)
+        T_k = time.time() - start_time
+
+        factor = 8 * np.pi * Positions.shape[1] ** 2 * R_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
+
+        R_opt_cut = (p_error / (float)(np.pi)) ** 0.5 * (factor * T_k / (float)(T_r)) ** (1 / 6) * (L / (Positions.shape[1] ** (1 / 6)))
+        K_opt_cut = 2 * p_error / R_opt_cut
+
+
+        k_max_long_range = np.ceil(K_opt_cut * L[0] / (float)(2 * np.pi))
+        # in dependency of k_max_long_range and the box length L all linear combination are computed
+        lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
+        # the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
+        lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
+        # all k-vectors (rows) that are longer than k_cut are deleted
+        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > K_opt_cut)), axis=0)
+
+        return (R_opt_cut, K_opt_cut)
 
     def compute_potential(self,labels,positions, neighbours, distances):
         return self.__short_range_potential(labels, neighbours, distances) + self.__long_range_potential(labels[:,1],positions)
@@ -340,7 +365,7 @@ class  coulomb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the short-range-Force acting upon Particle i componentwise. 
 
         '''
-        K = self.LinComb(self.n_boxes_short_range)
+        K = self.directions(self.n_boxes_short_range).get_directions()
         K[:,0] *=L[0]
         K[:,1] *=L[1]
         K[:,2] *=L[2]
