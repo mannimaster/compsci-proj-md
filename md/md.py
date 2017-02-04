@@ -170,8 +170,7 @@ class md(object):
                  k_max_long_range, 
                  dt,
                  p_rea,
-                 k_cut,
-                 r_cut_coulomb):
+                 p_error):
         #check input parameters
         self.positions=positions
         self.R=R
@@ -180,7 +179,6 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,box, k_max_long_range, k_cut)
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
@@ -191,10 +189,13 @@ class md(object):
         self.n_boxes_short_range = n_boxes_short_range
         self.k_max_long_range = k_max_long_range
         self.p_rea = p_rea
-        self.k_cut = k_cut
-        self.r_cut_coulomb = r_cut_coulomb
-        self.neighbours, self.distances= neighbourlist().compute_neighbourlist(positions, box[0], r_cut_coulomb)
-        #return
+
+        self.k_cut = 2 * p_error * 2 / (float)(box[0])
+        self.coulomb = coulomb(std, n_boxes_short_range, box, self.k_cut)
+        self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,R,properties,box[0],p_error)
+
+        self.neighbours, self.distances= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
+
         return
     
     @property
@@ -310,6 +311,7 @@ class md(object):
             Array containg the Forces that act upon each particle component wise. 
         """
         Forces = self.lennard_jones.compute_forces(Positions =self.positions, 
+                                                   R=self.R, 
                                                    Sigma =self.Sigma_LJ,
                                                    Epsilon = self.Epsilon_LJ, 
                                                    Labels =self.labels, 
@@ -318,6 +320,7 @@ class md(object):
                                                    r_switch = self.r_switch,
                                                    neighbours = self.neighbours)+(
         self.coulomb.compute_forces(Positions =self.positions,
+                                      R = self.R,
                                       Labels = self.labels,
                                       L = self.L) )
         return Forces
