@@ -16,7 +16,6 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-#from .api import md
 import Initial_Test_Parameters as ip
     
 def test_get_dircetions():
