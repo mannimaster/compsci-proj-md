@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from boxvectors import directions as directions
 from neighbourlist import neighbourlist
 import numpy as np
+import time
 from scipy.special import erf
 from scipy.special import erfc
 from scipy.constants import epsilon_0
@@ -49,7 +50,7 @@ class  coulomb(__particle_interaction):
         forces
     '''
 
-    def __init__(self,std, n_boxes_short_range,L, k_max_long_range,k_cut):
+    def __init__(self,std, n_boxes_short_range, L, k_cut, **kwargs):
         '''
         creates a coloumb object with properties that do not change over time
 
@@ -57,10 +58,16 @@ class  coulomb(__particle_interaction):
 
         '''
 
+        # if an input epsilon0 = any number is given, then this will be used otherwise it will be used the
+        # epsilon_0 from the scipy package in SI (8.85.. * 10^-12 Vm/As)
+        self.epsilon0 = kwargs.pop('epsilon0', epsilon_0)
+
         self.std = std
         self.n_boxes_short_range = n_boxes_short_range
-        self.constant = 1 / (8 * np.pi * epsilon_0)        # prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * self.epsilon0)        # prefactor for the short range potential/forces
         self.volume = L[0] ** 3                            # Volume of box
+
+        k_max_long_range = np.ceil(k_cut * L[0] / (float)(2 * np.pi))
 
         #in dependency of k_max_long_range and the box length L all linear combination are computed
         lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
@@ -69,7 +76,36 @@ class  coulomb(__particle_interaction):
         #all k-vectors (rows) that are longer than k_cut are deleted
         self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > k_cut)), axis=0)
         
-        return 
+        return
+
+    def compute_optimal_cutoff(self, Positions, R, Labels, L, p_error):
+
+        R_cut = (L / (float)(2))
+        K_cut = 2 * p_error / (float)(R_cut)
+
+        start_time = time.time()
+        self.__short_range_forces(Positions, R, Labels, L)
+        T_r = time.time() - start_time
+
+        start_time = time.time()
+        self.__long_range_forces(Positions, Labels)
+        T_k = time.time() - start_time
+
+        factor = 8 * np.pi * Positions.shape[1] ** 2 * R_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
+
+        R_opt_cut = (p_error / (float)(np.pi)) ** 0.5 * (factor * T_k / (float)(T_r)) ** (1 / 6) * (L / (Positions.shape[1] ** (1 / 6)))
+        K_opt_cut = 2 * p_error / R_opt_cut
+
+
+        k_max_long_range = np.ceil(K_opt_cut * L[0] / (float)(2 * np.pi))
+        # in dependency of k_max_long_range and the box length L all linear combination are computed
+        lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
+        # the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
+        lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
+        # all k-vectors (rows) that are longer than k_cut are deleted
+        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > K_opt_cut)), axis=0)
+
+        return (R_opt_cut, K_opt_cut)
 
 
     def compute_potential(self,labels,positions, neighbours, distances):
@@ -226,7 +262,7 @@ class  coulomb(__particle_interaction):
         # ]
 
         return_vector = np.dot(np.exp(1j*np.transpose(matrix)), vector)
-        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * epsilon_0))
+        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * self.epsilon0))
 
         return return_vector.real
 
@@ -297,23 +333,23 @@ class  coulomb(__particle_interaction):
         long_range_potential = self.__long_range_potential(labels[:,1],positions)
 
         # calculates the self-interaction potential
-        self_energy = np.sum(np.array(labels[:,1]) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
+        self_energy = np.sum(np.array(labels[:,1]) ** 2) / (float)(2 * self.epsilon0 * self.std * np.power(2 * np.pi, 1.5))
 
         return 0.5 * np.sum(np.multiply(long_range_potential,labels[:,1])) - self_energy
 
-    def compute_forces(self,Positions, Labels,L):
+    def compute_forces(self,Positions,R, Labels,L):
         '''
 
         please add here description
 
         '''
         
-        Coulumb_forces = self.__short_range_forces(Positions, Labels,L) + self.__long_range_forces(Positions, Labels)
+        Coulumb_forces = self.__short_range_forces(Positions,R, Labels,L) + self.__long_range_forces(Positions, Labels)
 
         return Coulumb_forces
 
     
-    def __short_range_forces(self,Positions, Labels,L):
+    def __short_range_forces(self,Positions,R, Labels,L):
         ''' Calculate the Force resulting from the short range coulomb interaction between the Particles
 
         Parameters
@@ -368,7 +404,7 @@ class  coulomb(__particle_interaction):
                 + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*epsilon_0)
+        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*self.epsilon0)
         return Force_short_range
 
 
@@ -424,14 +460,14 @@ class  coulomb(__particle_interaction):
             Force_long_range[h,:] = sum(f_1)   
         
         # get prefactor right                                      
-        Force_long_range *= charges/(self.volume*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
+        Force_long_range *= charges/(self.volume*self.epsilon0)*2      # multiply by 2 because of symmetry properties of sine
         return Force_long_range
 
 
 class lennard_jones(__particle_interaction):
 
     def __init__(self):
-        self.constant = 1 / (8 * np.pi * epsilon_0)  #prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * self.epsilon0)  #prefactor for the short range potential/forces
         return
 
 
@@ -499,7 +535,7 @@ class lennard_jones(__particle_interaction):
     
     
 
-    def compute_forces(self,Positions,Sigma, Epsilon, Labels,L, switch_parameter, r_switch, neighbours):
+    def compute_forces(self,Positions,R,Sigma, Epsilon, Labels,L, switch_parameter, r_switch, neighbours):
         ''' Calculate the Force resulting from the lennard Jones Interaction between the Particles
 
         Parameters
@@ -537,7 +573,7 @@ class lennard_jones(__particle_interaction):
         #Get Neighbour-List, naive_Dists should be replaced in the future by Nils' Work
         
 
-        N = np.size(Positions[:,0])
+        N = np.size(R)
         Force_LJ = np.zeros((N,3))
 
         for i in np.arange(N):

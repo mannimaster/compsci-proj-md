@@ -48,18 +48,19 @@ class dynamics(object):
             std, 
             n_boxes_short_range,
             L,
-            k_max_long_range, 
             k_cut).compute_forces(
             Positions_new, 
+            R, 
             Labels,
             L)+lennard_jones(
             ).compute_forces(
             Positions_new,
+            R,
             Sigma, 
             Epsilon, 
             Labels,
-            L, 
-            switch_parameter, 
+            L,
+            switch_parameter,
             r_switch,
             neighbours)
         
@@ -140,6 +141,10 @@ class dynamics(object):
             k_cut,
             r_cut_coulomb)
         
+        # Update Trajectory frame, Positions and Velocites
+        Positions_new   
+        Velocities_new
+        Forces_new
 
         #Andersen Thermostat
         N = np.size(Positions[:,0])
