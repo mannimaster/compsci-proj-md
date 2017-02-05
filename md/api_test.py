@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 import numpy as np
 from boxvectors import directions as directions
@@ -26,16 +26,14 @@ L = ip.L
 T = ip.T
 dt = ip.dt
 p_rea = ip.p_rea
-p = ip.p
 std = ip.std
-k_cut = ip.k_cut
-k_max = ip.k_max_long_range
-n_boxes_LJ = ip.n_boxes_LJ
-n_boxes_coulomb = ip.n_boxes_short_range
+n_boxes_short_range = ip.n_boxes_short_range
+p_error = ip.p_error
 Sys= System(Symbols, Coefficients, Charges, N/2)
 Labels = Sys.get_Labels()
 Sigma, Epsilon = Sys.get_LJ_parameter()
 r_cut_coulomb = ip.r_cut_coulomb
+r_cut_LJ = ip.r_cut_LJ
 r_switch = ip.r_switch
 switch_parameter = ip.switch_parameter
 m = Labels[:,0]
@@ -68,17 +66,16 @@ MD = md(
     Forces, 
     L, 
     T, 
-    std, 
     Sigma, 
     Epsilon, 
     switch_parameter,
-    r_switch, 
-    n_boxes_coulomb, 
-    k_max, 
+    r_switch,
+    r_cut_LJ,
     dt, 
+    std,
+    n_boxes_short_range,
     p_rea,
-    k_cut,
-    r_cut_coulomb)
+    p_error)
 
 
 # In[6]:
@@ -86,14 +83,14 @@ MD = md(
 MD.forces = MD.get_forces()
 
 
-# In[8]:
+# In[7]:
 
 print MD.get_energy()
 print MD.get_potential()
 print MD.forces
 
 
-# In[ ]:
+# In[9]:
 
 Temperature = np.zeros(10)
 for i in np.arange(10):
@@ -101,6 +98,18 @@ for i in np.arange(10):
     MD.positions = Positions_New
     MD.velocities = Velocities_New
     MD.forces = Forces_New
+    MD.neighbours_LJ  = MD.get_neighbourlist_LJ()[0]
     Temperature[i] = MD.get_Temperature()
 plt.plot(Temperature)
+
+
+# In[12]:
+
+MD.neighbours = 0
+MD.neighbours
+
+
+# In[ ]:
+
+
 

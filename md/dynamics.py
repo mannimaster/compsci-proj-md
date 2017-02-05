@@ -18,13 +18,11 @@ class dynamics(object):
                                      Epsilon ,
                                      dt,
                                      L, 
-                                     std, 
-                                     n_boxes_short_range,
-                                     k_max_long_range,
                                      switch_parameter, 
                                      r_switch,
-                                     k_cut,
-                                     r_cut_coulomb):
+                                     neighbours_LJ,
+                                     coulomb,
+                                     lennard_jones):
         ''' The Verlocity Verlet Integrator
         '''
         
@@ -41,19 +39,11 @@ class dynamics(object):
         Positions_new[:,1] = Positions_new[:,1]%L[1]
         Positions_new[:,2] = Positions_new[:,2]%L[2]
         
-        #Compute neighbourlist
-        neighbours, distances = neighbourlist().compute_neighbourlist(Positions_new, L[0], r_cut_coulomb)
         
-        Forces_new = coulomb(
-            std, 
-            n_boxes_short_range,
-            L,
-            k_max_long_range, 
-            k_cut).compute_forces(
+        Forces_new = coulomb.compute_forces(
             Positions_new, 
             Labels,
-            L)+lennard_jones(
-            ).compute_forces(
+            L)+lennard_jones.compute_forces(
             Positions_new,
             Sigma, 
             Epsilon, 
@@ -61,7 +51,7 @@ class dynamics(object):
             L, 
             switch_parameter, 
             r_switch,
-            neighbours)
+            neighbours_LJ)
         
         Velocities_new = Velocities + (Forces_old+Forces_new)/(2*(np.outer(Labels[:,0],np.ones(3))))*dt
 
@@ -103,42 +93,37 @@ class dynamics(object):
 
     def compute_dynamics(self,
                          Positions,
-                         Velocities,
-                         Forces,
+                         Velocities, 
+                         Forces, 
                          Labels,
                          Sigma, 
                          Epsilon ,
                          dt,
-                         L,
-                         std, 
-                         n_boxes_short_range,
-                         k_max_long_range,
-                         switch_parameter,
-                         p_rea,
-                         T, 
+                         L, 
+                         T,
+                         switch_parameter, 
                          r_switch,
-                         k_cut,
-                         r_cut_coulomb):
+                         neighbours_LJ,
+                         p_rea,
+                         coulomb,
+                         lennard_jones):
         
         """Propagates the System using Velocity Verlet Integrator and Andersen Thermostat"""
         
         # Calculate new Positions and Forces
-        Positions_new, Velocities_new, Forces_new = self.__velocity_verlet_integrator(
-            Positions,
-            Velocities,
-            Forces,
-            Labels,
-            Sigma, 
-            Epsilon,
-            dt,
-            L,
-            std, 
-            n_boxes_short_range,
-            k_max_long_range, 
-            switch_parameter, 
-            r_switch,
-            k_cut,
-            r_cut_coulomb)
+        Positions_new, Velocities_new, Forces_new = self.__velocity_verlet_integrator(Positions,
+                                                                                      Velocities, 
+                                                                                      Forces, 
+                                                                                      Labels,
+                                                                                      Sigma, 
+                                                                                      Epsilon ,
+                                                                                      dt,
+                                                                                      L, 
+                                                                                      switch_parameter, 
+                                                                                      r_switch,
+                                                                                      neighbours_LJ,
+                                                                                      coulomb,
+                                                                                      lennard_jones)
         
 
         #Andersen Thermostat
