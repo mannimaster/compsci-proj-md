@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from scipy.special import erf
 from scipy.special import erfc
 from scipy.constants import epsilon_0
-get_ipython().magic(u'matplotlib inline')
+#get_ipython().magic(u'matplotlib inline')
 
 
 # In[3]:
