@@ -90,7 +90,7 @@ print MD.get_potential()
 print MD.forces
 
 
-# In[8]:
+# In[9]:
 
 Temperature = np.zeros(10)
 for i in np.arange(10):
@@ -98,13 +98,15 @@ for i in np.arange(10):
     MD.positions = Positions_New
     MD.velocities = Velocities_New
     MD.forces = Forces_New
+    MD.neighbours_LJ  = MD.get_neighbourlist_LJ()[0]
     Temperature[i] = MD.get_Temperature()
 plt.plot(Temperature)
 
 
-# In[ ]:
+# In[12]:
 
-
+MD.neighbours = 0
+MD.neighbours
 
 
 # In[ ]:

@@ -236,7 +236,7 @@ class md(object):
         self._potential = xyz
     
     
-    def get_neighbourlist(self):
+    def get_neighbourlist_coulomb(self):
         """Compute the neighbourlist according to r_cut_coulomb and given configuration 
        
         
@@ -251,7 +251,20 @@ class md(object):
         neighbours, distances = neighbourlist().compute_neighbourlist(self.positions, self.L[0], self.r_cut_coulomb)
         return neighbours, distances
     
-    
+    def get_neighbourlist_LJ(self):
+        """Compute the neighbourlist according to r_cut_coulomb and given configuration 
+       
+        
+        Returns
+        ..........
+        
+        neighbours: cell-linked list
+            list at entry i contains all neighbours of particle i within cutoff-radius
+        distances: cell-linked list
+            list at entry i contains the distances to all neighbours of particle i within cutoff-radius
+        """  
+        neighbours, distances = neighbourlist().compute_neighbourlist(self.positions, self.L[0], self.r_cut_LJ)
+        return neighbours, distances    
     
     
     # work in progress    
