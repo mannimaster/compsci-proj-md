@@ -70,7 +70,7 @@ class  coulomb(__particle_interaction):
 
     def compute_optimal_cutoff(self, Positions, Labels, L, p_error):
 
-        R_cut = (L / (float)(2))
+        R_cut = (L[0] / (float)(2))
         K_cut = 2 * p_error / (float)(R_cut)
 
         start_time = time.time()
@@ -83,7 +83,7 @@ class  coulomb(__particle_interaction):
 
         factor = 8 * np.pi * Positions.shape[1] ** 2 * R_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
 
-        R_opt_cut = (p_error / (float)(np.pi)) ** 0.5 * (factor * T_k / (float)(T_r)) ** (1 / 6) * (L / (Positions.shape[1] ** (1 / 6)))
+        R_opt_cut = (p_error / (float)(np.pi)) ** 0.5 * (factor * T_k / (float)(T_r)) ** (1 / 6) * (L[0] / (Positions.shape[1] ** (1 / 6)))
         K_opt_cut = 2 * p_error / R_opt_cut
 
 
@@ -365,7 +365,7 @@ class  coulomb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the short-range-Force acting upon Particle i componentwise. 
 
         '''
-        K = self.directions(self.n_boxes_short_range).get_directions()
+        K = directions(self.n_boxes_short_range).get_directions()
         K[:,0] *=L[0]
         K[:,1] *=L[1]
         K[:,2] *=L[2]

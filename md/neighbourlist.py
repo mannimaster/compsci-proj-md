@@ -39,12 +39,12 @@ class neighbourlist(object):
         distances = {}
         N, dim = np.shape(R)
         # assume same size in all N dimensions
-        n_cells = np.int(box_length / r_cutoff)
+        n_cells = np.ceil(box_length / r_cutoff).astype(int)
         # divide simulation box into small cells of equal size r_c >= r_cutoff
         r_c = box_length / n_cells 
 
         #define head and list 
-        head = [-1] * n_cells**3
+        head = [-1] * (n_cells+1)**3
         cllist = [-1] * N
         for i in range(0, N):
             #empty list of neighbors
