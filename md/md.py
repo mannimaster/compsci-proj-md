@@ -161,11 +161,12 @@ class md(object):
                  forces,
                  box,
                  Temperature,
-                 std,
                  Sigma_LJ,
                  Epsilon_LJ, 
                  switch_parameter, 
                  r_switch,
+                 r_cut_LJ,
+                 std,
                  n_boxes_short_range,
                  dt,
                  p_rea,
@@ -178,22 +179,21 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-
+        self.std =  std
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
         self.switch_parameter = switch_parameter
         self.r_switch = r_switch
+        self.r_cut_LJ = r_cut_LJ
         self.dt = dt
-        self.std = std
-        self.n_boxes_short_range = n_boxes_short_range
         self.p_rea = p_rea
-
         self.k_cut = 2 * p_error * 2 / (float)(box[0])
-        self.coulomb = coulomb(std, n_boxes_short_range, box, self.k_cut)
-        self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,properties,box[0],p_error)
-
-        self.neighbours, self.distances= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
+        self.n_boxes_short_range= n_boxes_short_range
+        self.coulomb = coulomb(self.std, n_boxes_short_range, box, self.k_cut)
+        self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
+        self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
+        self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
         return
     
     @property
@@ -269,12 +269,12 @@ class md(object):
         Potential = self.lennard_jones.compute_potential(sigma = self.Sigma_LJ,
                                                          epsilon = self.Epsilon_LJ, 
                                                          labels = self.labels,
-                                                         neighbours = self.neighbours,
-                                                         distances = self.distances)+(
+                                                         neighbours = self.neighbours_LJ,
+                                                         distances = self.distances_LJ)+(
         self.coulomb.compute_potential(labels = self.labels,
                                        positions = self.positions,
-                                       neighbours = self.neighbours,
-                                       distances = self.distances))
+                                       neighbours = self.neighbours_coulomb,
+                                       distances = self.distances_coulomb))
         
         return Potential
     
@@ -284,12 +284,12 @@ class md(object):
         Energy = self.lennard_jones.compute_energy(sigma = self.Sigma_LJ,
                                                    epsilon = self.Epsilon_LJ,
                                                    labels = self.labels,
-                                                   neighbours = self.neighbours,
-                                                   distances = self.distances)+(
+                                                   neighbours = self.neighbours_LJ,
+                                                   distances = self.distances_LJ)+(
         self.coulomb.compute_energy(labels = self.labels,
                                     positions = self.positions, 
-                                    neighbours = self.neighbours, 
-                                    distances = self.distances))
+                                    neighbours = self.neighbours_coulomb, 
+                                    distances = self.distances_coulomb))
         return Energy
     
     
@@ -315,7 +315,7 @@ class md(object):
                                                    L =self.L, 
                                                    switch_parameter = self.switch_parameter, 
                                                    r_switch = self.r_switch,
-                                                   neighbours = self.neighbours)+(
+                                                   neighbours = self.neighbours_LJ)+(
         self.coulomb.compute_forces(Positions =self.positions,
                                       Labels = self.labels,
                                       L = self.L) )
@@ -336,24 +336,22 @@ class md(object):
             Array with N rows and 3 columns. Contains each the force acting upon each particle component wise.
         
         """
-        Positions, Velocities, Forces = dynamics().compute_dynamics(
-            self.positions, 
-            self.velocities, 
-            self.forces,
-            self.labels, 
-            self.Sigma_LJ, 
-            self.Epsilon_LJ,
-            self.dt, 
-            self.L,
-            self.std, 
-            self.n_boxes_short_range,
-            self.k_max_long_range,
-            self.switch_parameter,
-            self.p_rea,
-            self.T, 
-            self.r_switch,
-            self.k_cut,
-            self.r_cut_coulomb)
+        Positions, Velocities, Forces = dynamics().compute_dynamics(self.positions,
+                                                                    self.velocities, 
+                                                                    self.forces, 
+                                                                    self.labels,
+                                                                    self.Sigma_LJ, 
+                                                                    self.Epsilon_LJ,
+                                                                    self.dt,
+                                                                    self.L, 
+                                                                    self.T,
+                                                                    self.switch_parameter, 
+                                                                    self.r_switch,
+                                                                    self.neighbours_LJ,
+                                                                    self.p_rea,
+                                                                    self.coulomb,
+                                                                    self.lennard_jones)
+        
         return Positions, Velocities, Forces
     
     def get_Temperature(self):
