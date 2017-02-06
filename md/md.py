@@ -183,7 +183,7 @@ class md(object):
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
-        self.switch_parameter = switch_parameter
+        self.switch_parameter = self.get_switch_paramter()
         self.r_switch = r_switch
         self.r_cut_LJ = r_cut_LJ
         self.dt = dt
@@ -234,6 +234,17 @@ class md(object):
     @potential.setter
     def potential(self,xyz):
         self._potential = xyz
+        
+    def get_switch_parameter(self):
+        A = np.array([ 
+            [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
+            [1, self.r_cut_coulomb, self.r_cut_coulomb**2, self.r_cut_coulomb**3],
+            [0, 1, 2*self.r_switch, 3*self.r_switch**2], 
+            [0, 0, 2, 6*self.r_switch]])
+        switch_parameter = np.dot(np.linalg.inv(A), np.array([1,0,1,1]))
+        return switch_parameter
+
+    
     
     
     def get_neighbourlist_coulomb(self):
