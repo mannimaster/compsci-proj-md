@@ -60,6 +60,10 @@ n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
 #Standart Deviation of Gauss Charge Distribution
 std = r_cut_coulomb/np.sqrt(2*p_error)
 
+##################################################################################
+### PUT THIS IN md.py as we want the switch raadius depending on R_optimal !!! ###
+##################################################################################
+
 # Calculate Switch Parameter by solving the following System of linear equations
 #
 # A*switch_parameters = [1, 0, 1, 1]
