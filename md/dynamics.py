@@ -25,13 +25,7 @@ class dynamics(object):
                                      coulomb,
                                      lennard_jones):
         ''' The Verlocity Verlet Integrator
-        '''
-
-
-        #N and R are not used -> can be deleted?
-        N = np.size(Positions[:,0])
-        R = np.sqrt(np.sum(Positions**2,1))
-        
+        '''       
 
         Forces_old = Forces
 
