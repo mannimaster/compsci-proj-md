@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
 from distribution import maxwellboltzmann
@@ -24,20 +25,19 @@ class dynamics(object):
                                      coulomb,
                                      lennard_jones):
         ''' The Verlocity Verlet Integrator
-        '''
-        
-        N = np.size(Positions[:,0])
-        R = np.sqrt(np.sum(Positions**2,1))
-        
+        '''       
 
         Forces_old = Forces
 
         Positions_new = Positions +Velocities*dt + Forces_old/(np.outer(Labels[:,0],np.ones(3))) *dt**2 
 
         #Implement PBC
-        Positions_new[:,0] = Positions_new[:,0]%L[0]
-        Positions_new[:,1] = Positions_new[:,1]%L[1]
-        Positions_new[:,2] = Positions_new[:,2]%L[2]
+
+        #use fmod instead of %, see, for further information see
+        #https://docs.python.org/3/library/math.html#math.fmod
+        Positions_new[:,0] = math.fmod(Positions_new[:,0],L[0])
+        Positions_new[:,1] = math.fmod(Positions_new[:,1],L[1])
+        Positions_new[:,2] = math.fmod(Positions_new[:,2],L[2])
         
         
         Forces_new = coulomb.compute_forces(
