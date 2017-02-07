@@ -181,19 +181,23 @@ class md(object):
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.std =  std
+        
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
-        self.switch_parameter = self.get_switch_paramter()
-        self.r_switch = r_switch
         self.r_cut_LJ = r_cut_LJ
+        
         self.dt = dt
         self.p_rea = p_rea
+        
+        self.std =  std
+        self.r_switch = r_switch
         self.k_cut = 2 * p_error * 2 / (float)(box[0])
         self.n_boxes_short_range= n_boxes_short_range
         self.coulomb = coulomb(self.std, n_boxes_short_range, box, self.k_cut)
         self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
+        self.switch_parameter = self.get_switch_paramter()
+        
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
         self.N = np.size(self.positions[:,0])
@@ -207,6 +211,7 @@ class md(object):
     @positions.setter
     def positions(self,xyz):
         self._positions = xyz
+        return
      
     @property
     def R(self):
@@ -215,7 +220,8 @@ class md(object):
     @R.setter
     def R(self,new_R):
         self._R = new_R
-        
+        return
+    
     @property
     def velocities(self):
         return self._velocities
@@ -223,14 +229,17 @@ class md(object):
     @velocities.setter
     def velocities(self,xyz):
         self._velocities = xyz
+        return
     
     @property
     def forces(self):
         return self._forces    
+    
     @forces.setter
     def forces(self,xyz):
         self._forces = xyz 
-        
+        return
+    
     @property
     def potential(self):
         return self._potential  
@@ -238,7 +247,8 @@ class md(object):
     @potential.setter
     def potential(self,xyz):
         self._potential = xyz
-        
+        return
+    
     def get_switch_parameter(self):
         A = np.array([ 
             [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
