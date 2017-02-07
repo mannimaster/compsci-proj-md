@@ -39,9 +39,10 @@ class neighbourlist(object):
         distances = {}
         N, dim = np.shape(R)
         # assume same size in all N dimensions
-        n_cells = np.ceil(box_length / r_cutoff).astype(int)
+        n_cells = np.int(box_length / r_cutoff)
         # divide simulation box into small cells of equal size r_c >= r_cutoff
         r_c = box_length / n_cells 
+        ind_vec = n_cells#np.int(box_length / r_c)
 
         #define head and list 
         head = [-1] * (n_cells+1)**3
@@ -54,7 +55,6 @@ class neighbourlist(object):
             x = np.int(R[i][0] / r_c)
             y = np.int(R[i][1] / r_c)
             z = np.int(R[i][2] / r_c)
-            ind_vec = np.int(box_length / r_c)
             cell_index = x*ind_vec*ind_vec + y*ind_vec + z
             cllist[i] = head[cell_index]
             # The last one goes to the head
@@ -63,8 +63,8 @@ class neighbourlist(object):
 
         # For all cells: Look for neighbors within neighboring cells
         for cell in range(n_cells**3):
-            x = cell/(ind_vec*ind_vec)
-            y = (cell/ind_vec) % ind_vec
+            x = np.int(cell/(ind_vec*ind_vec)) % ind_vec
+            y = np.int(cell/ind_vec) % ind_vec
             z = cell % ind_vec
 
             nb = np.empty(dim)
@@ -73,15 +73,15 @@ class neighbourlist(object):
             nb[0] = x-1
             nb[1] = y-1
             nb[2] = z-1
-            for nbcell_ind in range(1,3**3+1):
-                if nbcell_ind != 1:
+            for nbcell_ind in range(3**3):
+                if nbcell_ind != 0:
                     nb[2] += 1
-                if nbcell_ind % 3 == 0:
-                    nb[2] = z-1
-                    nb[1] += 1
-                if nbcell_ind % 9 == 0:
-                    nb[1] = y-1
-                    nb[0] += 1
+                    if nbcell_ind % 3 == 0:
+                        nb[2] = z-1
+                        nb[1] += 1
+                    if nbcell_ind % 9 == 0:
+                        nb[1] = y-1
+                        nb[0] += 1
 
                 # Shift image position of simulation box?
                 for d in range(dim):
