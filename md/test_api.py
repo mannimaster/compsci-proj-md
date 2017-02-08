@@ -139,25 +139,26 @@ def test_SymmetriesPotLJ2():
     return
 
     
-    def test_coulomb_forces():
-        c = coulomb(std,
-                    n_boxes_short_range,
-                    Test_L,
-                    k_max,
-                    k_cut)
-        Force = c.compute_forces(Test_Positions,
-                                 Test_Labels,
-                                 Test_L)
-        assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
-    def test_LJ_range_forces():
-        LJ = lennard_jones()
-        Force = LJ.compute_forces(Test_Positions,
-                                  Sigma,
-                                  Epsilon,
-                                  Test_Labels,
-                                  Test_L,
-                                  switch_parameter,
-                                  r_switch,
-                                  r_cut_LJ)
-        assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
+def test_coulomb_forces():
+    c = coulomb(std,
+                n_boxes_short_range,
+                Test_L,
+                k_max,
+                k_cut)
+    Force = c.compute_forces(Test_Positions,
+                             Test_Labels,
+                             Test_L)
+    assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
+    
+def test_LJ_range_forces():
+    LJ = lennard_jones()
+    Force = LJ.compute_forces(Test_Positions,
+                              Sigma,
+                              Epsilon,
+                              Test_Labels,
+                              Test_L,
+                              switch_parameter,
+                              r_switch,
+                              r_cut_LJ)
+    assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
 
