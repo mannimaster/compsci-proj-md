@@ -189,13 +189,14 @@ class md(object):
         self.dt = dt
         self.p_rea = p_rea
         self.n_boxes_short_range= n_boxes_short_range
-        self.r_switch = r_switch
-        self.switch_parameter = self.__get_switch_parameter()
         
         # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
         self.coulomb = coulomb(n_boxes_short_range, box, p_error,epsilon0=0.000239704)
         self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
-        
+
+        self.r_switch = r_switch
+        self.switch_parameter = self.__get_switch_parameter()
+
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
         self.N = np.size(self.positions[:,0])
