@@ -156,7 +156,6 @@ class md(object):
     '''
     def __init__(self, 
                  positions,
-                 R,
                  properties, 
                  velocities,
                  forces,
@@ -175,7 +174,7 @@ class md(object):
                  Symbols):
         #check input parameters
         self.positions=positions
-        self.R=R
+        self.R=np.linalg.norm(self.positions)
         self.labels=properties
         self.velocities = velocities
         self.forces = forces
@@ -374,21 +373,22 @@ class md(object):
             Array with N rows and 3 columns. Contains each the force acting upon each particle component wise.
         
         """
-        Positions, Velocities, Forces = dynamics().compute_dynamics(self.positions,
-                                                                    self.velocities, 
-                                                                    self.forces, 
-                                                                    self.labels,
-                                                                    self.Sigma_LJ, 
-                                                                    self.Epsilon_LJ,
-                                                                    self.dt,
-                                                                    self.L, 
-                                                                    self.T,
-                                                                    self.switch_parameter, 
-                                                                    self.r_switch,
-                                                                    self.neighbours_LJ,
-                                                                    self.p_rea,
-                                                                    self.coulomb,
-                                                                    self.lennard_jones)
+        Positions, Velocities, Forces = dynamics().velocity_verlet_integrator(self.positions,
+                                                                               self.velocities, 
+                                                                               self.forces, 
+                                                                               self.labels,
+                                                                               self.Sigma_LJ, 
+                                                                               self.Epsilon_LJ,
+                                                                               self.dt,
+                                                                               self.L, 
+                                                                               self.T,
+                                                                               self.switch_parameter, 
+                                                                               self.r_switch,
+                                                                               self.neighbours_LJ,
+                                                                               self.p_rea,
+                                                                               self.coulomb,
+                                                                               self.lennard_jones,
+                                                                               thermostat = True)
         
         return Positions, Velocities, Forces
     
@@ -406,16 +406,13 @@ class md(object):
         
                          
     
-    def get_traj(self, N_steps, Energy_threshold, Energy_save, Temperature_save, Frame_save, path):
+    def get_traj(self, N_steps, Energy_save, Temperature_save, Frame_save, path):
         """Propagates the System unitil convergence is reached or the maximum Number of Steps is reached
 
         Parameters
         ----------------
         N_steps: int
             The number of steps the simulation will maximally run for.
-
-        Energy_threshold: float
-            The Simulation will stop if the difference between to subsquent Energy measurements falls below the threshold.
 
         Energy_save: int
             The intervall at which energies are measured and saved.
@@ -431,7 +428,11 @@ class md(object):
 
         Returns
         -----------------
-        Message by which means the simulation was terminated(Energy convergence or maximum number of steps reached)
+        "Simulation Completed"
+        Results will be saved in the specified path. Files will be named as follows:
+        Trajectory : traj.xyz
+        Energies: Energies
+        Temperature: Temperature
 
         """
         traj_file = ''.join([path,"\\traj.xyz"])
@@ -504,7 +505,7 @@ class md(object):
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
 
-                myfile.write((b"125"+b"\n"+b"\n"))
+                myfile.write(string1)
                 myfile.close()
 
                 counter_Frame = 0
@@ -512,8 +513,102 @@ class md(object):
             sys.stdout.write("\r")
             sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps \\completed"]))
             sys.stdout.flush()
-            if i>Energy_save and  np.abs(Energy[E_index]-Energy[E_index -1]) < Energy_threshold:
-                # Save Frame
+
+        # save Energy       
+        np.savetxt(Energy_file, Energy)
+        # save Temperature         
+        np.savetxt(Temperature_file, Temperature)
+        return "Simulation Completed"
+
+    
+    
+    
+    
+    
+    
+    def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, constant, path):
+        """Minimizes the Energy by steepest descent
+
+        Parameters
+        ----------------
+        N_steps: int
+            The number of steps the simulation will maximally run for.
+            
+        threshold: float
+            if the line sum norm of the forces falls below the threshold, the minimization is completed
+
+        Energy_save: int
+            The intervall at which energies are measured and saved.
+
+        Frame_save: int
+            The intervall at which frames are created and saved. 
+            
+        constant: float
+            The constant, the forces are multiplied with, to update the positions
+
+        Path: string
+            Location where results will be saved.
+
+        Returns
+        -----------------
+        Means by which the minimization was completed.
+        either "Energy converged" 
+        or "Maximum Number of steps reached
+        
+        Results will be saved in the specified path. Files will be named as follows:
+        Trajectory : traj.xyz
+        Energies: Energies"""
+        
+        traj_file = ''.join([path,"\\traj_minimization.xyz"])
+        Energy_file = ''.join([path,"\\Energies_minimization"])
+        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+
+        #write header
+        myfile = open(traj_file,'w')
+        myfile.write(str(self.N)+"\n"+"\n")
+        myfile.close()
+
+        frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+        frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+        #Positions in Angstroem
+        frame['var2'] = self.positions[:,0]*1e10
+        frame['var3'] = self.positions[:,1]*1e10
+        frame['var4'] = self.positions[:,2]*1e10  
+
+        myfile = open(traj_file,'ab')
+        np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+        myfile.write(string1)
+        myfile.close()
+
+        Energy = np.zeros(np.ceil(N_steps/Energy_save).astype(int))
+
+        counter_Energy = 0
+        counter_Frame = 0
+        E_index = -1
+        
+        for i in np.arange(N_steps):
+        
+            #Update Positions
+            Positions_new = dynamics().steepest_descent(self.positions, self.labels, self.forces,self.L, constant)
+
+            #Update Self
+            self.positions = Positions_new
+            self.neighbours_LJ = self.get_neighbourlist_LJ()[0]
+            self.forces = self.get_forces()
+            
+            counter_Energy += 1
+            counter_Frame += 1
+            #Save Energy
+            if counter_Energy > Energy_save-1:
+                E_index += 1
+                Energy[E_index] = self.get_energy()
+                counter_Energy = 0
+
+            # Save Frame
+            if counter_Frame > Frame_save-1 :
+                #create frame
                 frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
                 frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
@@ -528,16 +623,39 @@ class md(object):
 
                 myfile.write(string1)
                 myfile.close()
-                # save Energy
+
+                counter_Frame = 0
+            
+            #show Progress
+            sys.stdout.write("\r")
+            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps completed"]))
+            sys.stdout.flush()
+            
+            # Calculate norm
+            norm_Forces = np.max(np.sum(np.abs(self.forces),1))
+            
+            if norm_Forces < threshold:
+                #create frame
+                frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+                frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+                #Positions in Angstroem
+                frame['var2'] = self.positions[:,0]*1e10
+                frame['var3'] = self.positions[:,1]*1e10
+                frame['var4'] = self.positions[:,2]*1e10  
+
+                #save frame
+                myfile = open(traj_file,'ab')
+                np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+                myfile.write(string1)
+                myfile.close()
+                
+                # save Energy       
                 np.savetxt(Energy_file, Energy)
-                # save Temperature
-                np.savetxt(Temperature_file, Temperature)
-
-                return "Energy converged"
-
+                return "Energy Converged"
+            
+            
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        # save Temperature         
-        np.savetxt(Temperature_file, Temperature)
-        return "Maximum Number of Steps reached, system eventually not converged"
-
+        return "Maximum Number of Steps reached"
