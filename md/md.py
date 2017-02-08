@@ -196,7 +196,7 @@ class md(object):
         self.n_boxes_short_range= n_boxes_short_range
         self.coulomb = coulomb(self.std, n_boxes_short_range, box, self.k_cut)
         self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
-        self.switch_parameter = self.get_switch_paramter()
+        self.switch_parameter = self.__get_switch_parameter()
         
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
@@ -249,7 +249,7 @@ class md(object):
         self._potential = xyz
         return
     
-    def get_switch_parameter(self):
+    def __get_switch_parameter(self):
         A = np.array([ 
             [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
             [1, self.r_cut_coulomb, self.r_cut_coulomb**2, self.r_cut_coulomb**3],
@@ -529,9 +529,9 @@ class md(object):
                 myfile.write(string1)
                 myfile.close()
                 # save Energy
-                np.savetxt(name, Energy)
+                np.savetxt(Energy_file, Energy)
                 # save Temperature
-                np.savetxt(name, Temperature)
+                np.savetxt(Temperature_file, Temperature)
 
                 return "Energy converged"
 

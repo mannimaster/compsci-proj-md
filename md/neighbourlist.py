@@ -39,7 +39,7 @@ class neighbourlist(object):
         distances = {}
         N, dim = np.shape(R)
         # assume same size in all N dimensions
-        n_cells = np.int(box_length / r_cutoff)
+        n_cells = np.ceil(box_length / r_cutoff).astype(int)
         # divide simulation box into small cells of equal size r_c >= r_cutoff
         r_c = box_length / n_cells 
         ind_vec = n_cells#np.int(box_length / r_c)

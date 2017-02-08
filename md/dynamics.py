@@ -35,9 +35,9 @@ class dynamics(object):
 
         #use fmod instead of %, see, for further information see
         #https://docs.python.org/3/library/math.html#math.fmod
-        Positions_new[:,0] = math.fmod(Positions_new[:,0],L[0])
-        Positions_new[:,1] = math.fmod(Positions_new[:,1],L[1])
-        Positions_new[:,2] = math.fmod(Positions_new[:,2],L[2])
+        Positions_new[:,0] = np.fmod(Positions_new[:,0],L[0])
+        Positions_new[:,1] = np.fmod(Positions_new[:,1],L[1])
+        Positions_new[:,2] = np.fmod(Positions_new[:,2],L[2])
         
         
         Forces_new = coulomb.compute_forces(
