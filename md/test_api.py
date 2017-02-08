@@ -1,6 +1,6 @@
 #   md - Molecular Dynamics Applied to ionic solids.
 #   Copyright (C) 2017 Nils Harmening, Marco Manni,
-#   Darian Steven Viezzer, Steffanie Kieninger, Henrik Narvaez
+#   Darian Steven Viezzer, Stefanie Kieninger, Henrik Narvaez
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
