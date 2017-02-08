@@ -42,7 +42,7 @@ class  coulomb(__particle_interaction):
         forces
     '''
 
-    def __init__(self,std, n_boxes_short_range, L, k_cut, **kwargs):
+    def __init__(self, n_boxes_short_range, L, p_error, **kwargs):
         '''
         creates a coloumb object with properties that do not change over time
 
@@ -51,8 +51,9 @@ class  coulomb(__particle_interaction):
         '''
 
         self.epsilon0 = kwargs.pop('epsilon0', epsilon_0)
+        k_cut = kwargs.pop('k_cut', 4 * p_error / (float)(L[0]))
 
-        self.std = std
+        self.std = np.sqrt(2 * p_error) / (float)(k_cut)
         self.n_boxes_short_range = n_boxes_short_range
         self.constant = 1 / (8 * np.pi * epsilon_0)        # prefactor for the short range potential/forces
         self.volume = L[0] ** 3                            # Volume of box
@@ -62,7 +63,8 @@ class  coulomb(__particle_interaction):
         #in dependency of k_max_long_range and the box length L all linear combination are computed
         lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
         #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
-        lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
+        #lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
+        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) == 0)), axis=0)
         #all k-vectors (rows) that are longer than k_cut are deleted
         self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > k_cut)), axis=0)
         
@@ -94,8 +96,9 @@ class  coulomb(__particle_interaction):
         lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
         # all k-vectors (rows) that are longer than k_cut are deleted
         self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > K_opt_cut)), axis=0)
+        self.std = np.sqrt(2 * p_error) / (float)(K_opt_cut)
 
-        return (R_opt_cut, K_opt_cut)
+        return (R_opt_cut, K_opt_cut, self.std)
 
     def compute_potential(self,labels,positions, neighbours, distances):
         return self.__short_range_potential(labels, neighbours, distances) + self.__long_range_potential(labels[:,1],positions)
@@ -322,7 +325,7 @@ class  coulomb(__particle_interaction):
         long_range_potential = self.__long_range_potential(labels[:,1],positions)
 
         # calculates the self-interaction potential
-        self_energy = np.sum(np.array(labels[:,1]) ** 2) / (float)(2 * epsilon_0 * self.std * np.power(2 * np.pi, 1.5))
+        self_energy = np.sum(np.array(labels[:,1]) ** 2) / (float)(2 * self.epsilon0 * self.std * np.power(2 * np.pi, 1.5))
 
         return 0.5 * np.sum(np.multiply(long_range_potential,labels[:,1])) - self_energy
 
