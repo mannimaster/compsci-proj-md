@@ -79,9 +79,9 @@ class  coulomb(__particle_interaction):
 
         Parameters
         ----------
-        labels: Nx? Array
+        labels: Nx3 Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-            Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+            Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
         neighbours : dictionary of lists
             all neighbours within given cutoff radius + skin radius
@@ -109,9 +109,9 @@ class  coulomb(__particle_interaction):
 
         Parameters
         ----------
-        labels: Nx? Array
+        labels: Nx3 Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-            Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+            Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
         neighbours : dictionary of lists
             all neighbours within given cutoff radius + skin radius
@@ -257,7 +257,7 @@ class  coulomb(__particle_interaction):
 
                 Parameters
                 ---------------
-                labels: Nx? Array
+                labels: Nx3 Array
                     Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
                     Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
 
@@ -284,9 +284,9 @@ class  coulomb(__particle_interaction):
 
                 Parameters
                 ---------------
-                labels: Nx? Array
+                labels: Nx3 Array
                     Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-                    Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+                    Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
                 charges: N x 1 Vector
                     Vector with the charge of each particle. The index indicates the particle number.
@@ -315,7 +315,7 @@ class  coulomb(__particle_interaction):
                 ---------------
                 labels: Nx? Array
                     Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-                    Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+                    Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
                 positions: N x 3 Array
                     Array with N rows, where each row represents the position of the particle with the same index
@@ -359,9 +359,9 @@ class  coulomb(__particle_interaction):
         R: Nx1 Array
             Array with N entries. Contains each Particles Distance to the coordinate origin.
 
-        Labels: Nx? Array
+        Labels: Nx3 Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-            Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+            Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
         L:3x1 Array
             Array containg the Dimensions of the Simulation box
@@ -415,9 +415,9 @@ class  coulomb(__particle_interaction):
         Positions: Nx3 Array
             Array with N rows and 3 Columns, each row i contains the x,y and z coordinates of particle i.
 
-        Labels: Nx? Array
+        Labels: Nx3 Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-            Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+            Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
             
 
@@ -478,9 +478,9 @@ class lennard_jones(__particle_interaction):
 
         Parameters
         ----------
-        labels: Nx? Array
+        labels: N3? Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-            Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+            Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
         neighbours : dictionary of lists
             all neighbours within given cutoff radius + skin radius
@@ -561,9 +561,9 @@ class lennard_jones(__particle_interaction):
         Epsilon: 3x1 Array
             Array with 3 entries. Regarding 2 Particles the entries are: Epsilon = [epsilon_AA, epsilon_AB, epsilon_BB].
 
-        Labels: Nx? Array
+        Labels: Nx3 Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
-            Particle A should have the label 1 and Particle B should have the label 0. The first column contains the masses, the second the charge.
+            Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
 
         switch_parameter: 4x1 Array
             Array that contains the coefficient values for the switch polynomial
