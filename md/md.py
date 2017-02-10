@@ -516,7 +516,7 @@ class md(object):
         np.savetxt(Energy_file, Energy)
         # save Temperature         
         np.savetxt(Temperature_file, Temperature)
-        print "Simulation Completed"
+        print("Simulation Completed")
         return
 
     
@@ -560,7 +560,7 @@ class md(object):
         
         traj_file = ''.join([path,"\\traj_minimization.xyz"])
         Energy_file = ''.join([path,"\\Energies_minimization"])
-        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+        string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
         myfile = open(traj_file,'w')
@@ -577,7 +577,8 @@ class md(object):
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+        myfile.close()
+        myfile = open(traj_file,'a')
         myfile.write(string1)
         myfile.close()
 
@@ -619,7 +620,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
 
@@ -646,17 +648,18 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
                 
                 # save Energy       
                 np.savetxt(Energy_file, Energy)
-                print "Energy Converged"
+                print("Energy Converged")
                 return 
             
             
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        print "Maximum Number of Steps reached"
+        print("Maximum Number of Steps reached")
         return
