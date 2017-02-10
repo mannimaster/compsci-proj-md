@@ -27,7 +27,7 @@ class lazy_cythonize(list):
         self._list, self.callback = None, callback
     def c_list(self):
         if self._list is None: self._list = self.callback()
-            return self._list
+        return self._list
     def __iter__(self):
         for e in self.c_list(): yield e
     def __getitem__(self, ii): return self.c_list()[ii]
