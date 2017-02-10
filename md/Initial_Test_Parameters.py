@@ -42,7 +42,7 @@ epsilon   = np.array([1.,1.,1.])
 switch_parameter = np.array([1,-1,0,0])
 
 #distance where the switch-function kicks in (Lennard-Jones-Forces)
-r_switch = 1.5
+r_switch = r_cut_LJ*0.8
 
 ###############################################
 # !!!  DO NOT CHANGE THE FOLLOWING LINES  !!! #
