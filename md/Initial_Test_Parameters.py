@@ -12,7 +12,7 @@ L_z=3.
 L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 1.5
+r_cut_LJ = 1.0
 
 #Short-Range Potential Cutoff Radius
 r_cut_coulomb = 1.5
