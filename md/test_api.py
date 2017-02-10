@@ -36,7 +36,7 @@ r_cut_LJ = ip.r_cut_LJ
 r_switch = r_cut_LJ*0.9
 Sys= System(Symbols, Coefficients, Charges, N/2)
 Sigma, Epsilon = Sys.get_LJ_parameter()
-p_error = ip.p_error
+p_error = ip.p
 switch_parameter = ip.switch_parameter
 Test_Positions = np.array([[1,0,0],
                            [2,0,0]])
