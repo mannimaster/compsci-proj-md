@@ -20,7 +20,7 @@ import numpy as np
 from .api import md
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
-from neighbourlist import neighbourlist as NB
+from neighbourlist import neighbourlist 
 import Initial_Test_Parameters as ip
 from md import System
 
@@ -44,7 +44,7 @@ Test_R = np.linalg.norm(Test_Positions)
 Test_L = ip.L
 Test_Labels = np.array([[1,+1.0,0],
                         [1,-1.0,1]])
-neighbours = NB.compute_neighbourlist(Test_R, Test_L[0], r_cut_LJ)[0]
+neighbours = neighbourlist.compute_neighbourlist(Test_R, Test_L[0], r_cut_LJ)[0]
   
   
 def test_get_dircetions():
