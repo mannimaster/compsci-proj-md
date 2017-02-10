@@ -20,7 +20,7 @@ import numpy as np
 from .api import md
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
-from neighbourslist import neighbourlist as NB
+from neighbourlist import neighbourlist as NB
 import Initial_Test_Parameters as ip
 from md import System
 
