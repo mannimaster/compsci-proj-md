@@ -83,7 +83,7 @@ class dynamics(object):
             if np.size(indexes) is not 0: 
 
                 #Reassign a new Velocity to the Correspoding Particles
-                Velocities[indexes] = maxwellboltzmann().sample_distribution(N = np.size(indexes), m = m[indexes], T=T)        
+                Velocities_new[indexes] = maxwellboltzmann().sample_distribution(N = np.size(indexes), m = m[indexes], T=T)        
 
             return Positions_new, Velocities_new, Forces_new
         
