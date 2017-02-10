@@ -18,13 +18,12 @@ N = 10
 L_x=0.1
 L_y=0.1
 L_z=0.1
-#L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 0.07
+r_cut_LJ = 0.45*L_x
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 0.07
+r_cut_coulomb = 0.45*L_x
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
 p = 10.0
