@@ -24,10 +24,10 @@ from neighbourlist import neighbourlist as NB
 import Initial_Test_Parameters as ip
 from md import System
 
-Symbols = ip.Symbols
-Coefficients = ip.Coefficients
-Charges = ip.Charges
-N = ip.N*np.sum(Coefficients)
+Symbols = ["Na" , "Cl"]
+Coefficients = [1, 1]
+Charges = [+1.0, -1.0]
+N = 1*np.sum(Coefficients)
 #k_cut = ip.k_cut
 #k_max = ip.k_max_long_range
 n_boxes_short_range = ip.n_boxes_short_range
