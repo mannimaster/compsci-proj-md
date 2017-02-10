@@ -145,11 +145,11 @@ def test_coulomb_forces():
     Force = c.compute_forces(Test_Positions,
                              Test_Labels,
                              Test_L)
-    assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
+    assert np.all(Force[0,0] == -Force[1,0]), "coulomb force is broken"
     
 def test_LJ_forces():
     LJ = lennard_jones()
-    Force = LJ.compute_forces(Test_Positions,
+    Force = LJ.compute_forces(Test_Positions*1e-9,
                               Sigma,
                               Epsilon,
                               Test_Labels,
