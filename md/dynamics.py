@@ -49,9 +49,9 @@ class dynamics(object):
 
         #use fmod instead of %, see, for further information see
         #https://docs.python.org/3/library/math.html#math.fmod
-        Positions_new[:,0] = np.fmod(Positions_new[:,0],L[0])
-        Positions_new[:,1] = np.fmod(Positions_new[:,1],L[1])
-        Positions_new[:,2] = np.fmod(Positions_new[:,2],L[2])
+        Positions_new[:,0] = np.remainder(Positions_new[:,0],L[0])
+        Positions_new[:,1] = np.remainder(Positions_new[:,1],L[1])
+        Positions_new[:,2] = np.remainder(Positions_new[:,2],L[2])
         
         
         Forces_new = coulomb.compute_forces(
@@ -125,17 +125,15 @@ class dynamics(object):
         return Temperature
 
 
-    def steepest_descent(self,Positions, Labels, Forces,L, c):
+    def steepest_descent(self,Positions, Forces,L, c):
         """Energy Minimization """
 
-        masses = Labels[:,0]
-        N = np.size(masses)
         Positions_new = Positions + Forces*c
 
 
-        Positions_new[:,0] = np.fmod(Positions_new[:,0],(L[0]/2) )
-        Positions_new[:,1] = np.fmod(Positions_new[:,1],(L[1]/2) )
-        Positions_new[:,2] = np.fmod(Positions_new[:,2],(L[2]/2) )
+        Positions_new[:,0] = np.remainder(Positions_new[:,0],(L[0]) )
+        Positions_new[:,1] = np.remainder(Positions_new[:,1],(L[1]) )
+        Positions_new[:,2] = np.remainder(Positions_new[:,2],(L[2]) )
 
         return Positions_new
     

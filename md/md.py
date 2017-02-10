@@ -511,14 +511,15 @@ class md(object):
                 counter_Frame = 0
 
             sys.stdout.write("\r")
-            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps \\completed"]))
+            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps completed"]))
             sys.stdout.flush()
 
         # save Energy       
         np.savetxt(Energy_file, Energy)
         # save Temperature         
         np.savetxt(Temperature_file, Temperature)
-        return "Simulation Completed"
+        print "Simulation Completed"
+        return
 
     
     
@@ -591,7 +592,7 @@ class md(object):
         for i in np.arange(N_steps):
         
             #Update Positions
-            Positions_new = dynamics().steepest_descent(self.positions, self.labels, self.forces,self.L, constant)
+            Positions_new = dynamics().steepest_descent(self.positions,self.forces,self.L, constant)
 
             #Update Self
             self.positions = Positions_new
@@ -653,9 +654,11 @@ class md(object):
                 
                 # save Energy       
                 np.savetxt(Energy_file, Energy)
-                return "Energy Converged"
+                print "Energy Converged"
+                return 
             
             
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        return "Maximum Number of Steps reached"
+        print "Maximum Number of Steps reached"
+        return

@@ -12,40 +12,38 @@ Coefficients = np.array([1,1])
 Charges = np.array([1.0 ,-1.0])
 
 #Number of Particles
-N = 10
+N = 32
 
 #Boxsize
-L_x=0.1
-L_y=0.1
-L_z=0.1
+L_x=2.256e-09
+L_y=2.256e-09
+L_z=2.256e-09
+L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 0.45*L_x
+r_cut_LJ = 0.4*L_x
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 0.45*L_x
+r_cut_coulomb = 0.4*L_x
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
-p_error = 10.0
+p_error = 20.0
 
 #Temperature 
 T = 100 # Kelvin 
 
 #Timestep
-dt = 1e-3 # 1 ns
+dt = 1e-16 # .1 fs
 
 #Characetristic coupling time for Thermostat, must be larger than dt
-tau = 1e-1
+tau = 1e-13
 assert tau>dt, "tau must be larger than dt"
 
 #Switch Radius
 r_switch = r_cut_LJ*0.9
 assert r_switch < r_cut_LJ, "switch radius must be smaller than LJ cutoff Radius"
 
-###############################################
-# !!!  DO NOT CHANGE THE FOLLOWING LINES  !!! #
-###############################################
-
+# !!!  DO NOT CHANGE THESE LINES  !!!
 
 # Summarizing Dimension in one array
 L = np.array([L_x, L_y, L_z])
