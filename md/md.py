@@ -7,6 +7,7 @@ from neighbourlist import neighbourlist
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
 from dynamics import dynamics
+import sys
 PSE = PSE.PSE
 
 class System(object):
@@ -155,46 +156,51 @@ class md(object):
     '''
     def __init__(self, 
                  positions,
-                 R,
                  properties, 
                  velocities,
                  forces,
                  box,
                  Temperature,
-                 std,
                  Sigma_LJ,
                  Epsilon_LJ, 
                  switch_parameter, 
                  r_switch,
-                 n_boxes_short_range, 
-                 k_max_long_range, 
+                 r_cut_LJ,
+                 std,
+                 n_boxes_short_range,
                  dt,
                  p_rea,
-                 k_cut,
-                 r_cut_coulomb):
+                 p_error,
+                 Symbols):
         #check input parameters
         self.positions=positions
-        self.R=R
+        self.R=np.linalg.norm(self.positions)
         self.labels=properties
         self.velocities = velocities
         self.forces = forces
         self.L=box
         self.T= Temperature
-        self.coulomb = coulomb(std, n_boxes_short_range,box, k_max_long_range, k_cut)
+        
         self.lennard_jones = lennard_jones()
         self.Sigma_LJ = Sigma_LJ
         self.Epsilon_LJ = Epsilon_LJ
-        self.switch_parameter = switch_parameter
-        self.r_switch = r_switch
+        self.r_cut_LJ = r_cut_LJ
+        
         self.dt = dt
-        self.std = std
-        self.n_boxes_short_range = n_boxes_short_range
-        self.k_max_long_range = k_max_long_range
         self.p_rea = p_rea
-        self.k_cut = k_cut
-        self.r_cut_coulomb = r_cut_coulomb
-        self.neighbours, self.distances= neighbourlist().compute_neighbourlist(positions, box[0], r_cut_coulomb)
-        #return
+        
+        self.std =  std
+        self.r_switch = r_switch
+        self.k_cut = 2 * p_error * 2 / (float)(box[0])
+        self.n_boxes_short_range= n_boxes_short_range
+        self.coulomb = coulomb(self.std, n_boxes_short_range, box, self.k_cut)
+        self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
+        self.switch_parameter = self.__get_switch_parameter()
+        
+        self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
+        self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
+        self.N = np.size(self.positions[:,0])
+        self.Symbols = Symbols
         return
     
     @property
@@ -204,6 +210,7 @@ class md(object):
     @positions.setter
     def positions(self,xyz):
         self._positions = xyz
+        return
      
     @property
     def R(self):
@@ -212,7 +219,8 @@ class md(object):
     @R.setter
     def R(self,new_R):
         self._R = new_R
-        
+        return
+    
     @property
     def velocities(self):
         return self._velocities
@@ -220,14 +228,17 @@ class md(object):
     @velocities.setter
     def velocities(self,xyz):
         self._velocities = xyz
+        return
     
     @property
     def forces(self):
         return self._forces    
+    
     @forces.setter
     def forces(self,xyz):
         self._forces = xyz 
-        
+        return
+    
     @property
     def potential(self):
         return self._potential  
@@ -235,9 +246,21 @@ class md(object):
     @potential.setter
     def potential(self,xyz):
         self._potential = xyz
+        return
+    
+    def __get_switch_parameter(self):
+        A = np.array([ 
+            [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
+            [1, self.r_cut_coulomb, self.r_cut_coulomb**2, self.r_cut_coulomb**3],
+            [0, 1, 2*self.r_switch, 3*self.r_switch**2], 
+            [0, 0, 2, 6*self.r_switch]])
+        switch_parameter = np.dot(np.linalg.inv(A), np.array([1,0,1,1]))
+        return switch_parameter
+
     
     
-    def get_neighbourlist(self):
+    
+    def get_neighbourlist_coulomb(self):
         """Compute the neighbourlist according to r_cut_coulomb and given configuration 
        
         
@@ -252,7 +275,20 @@ class md(object):
         neighbours, distances = neighbourlist().compute_neighbourlist(self.positions, self.L[0], self.r_cut_coulomb)
         return neighbours, distances
     
-    
+    def get_neighbourlist_LJ(self):
+        """Compute the neighbourlist according to r_cut_coulomb and given configuration 
+       
+        
+        Returns
+        ..........
+        
+        neighbours: cell-linked list
+            list at entry i contains all neighbours of particle i within cutoff-radius
+        distances: cell-linked list
+            list at entry i contains the distances to all neighbours of particle i within cutoff-radius
+        """  
+        neighbours, distances = neighbourlist().compute_neighbourlist(self.positions, self.L[0], self.r_cut_LJ)
+        return neighbours, distances    
     
     
     # work in progress    
@@ -270,12 +306,12 @@ class md(object):
         Potential = self.lennard_jones.compute_potential(sigma = self.Sigma_LJ,
                                                          epsilon = self.Epsilon_LJ, 
                                                          labels = self.labels,
-                                                         neighbours = self.neighbours,
-                                                         distances = self.distances)+(
+                                                         neighbours = self.neighbours_LJ,
+                                                         distances = self.distances_LJ)+(
         self.coulomb.compute_potential(labels = self.labels,
                                        positions = self.positions,
-                                       neighbours = self.neighbours,
-                                       distances = self.distances))
+                                       neighbours = self.neighbours_coulomb,
+                                       distances = self.distances_coulomb))
         
         return Potential
     
@@ -285,12 +321,12 @@ class md(object):
         Energy = self.lennard_jones.compute_energy(sigma = self.Sigma_LJ,
                                                    epsilon = self.Epsilon_LJ,
                                                    labels = self.labels,
-                                                   neighbours = self.neighbours,
-                                                   distances = self.distances)+(
+                                                   neighbours = self.neighbours_LJ,
+                                                   distances = self.distances_LJ)+(
         self.coulomb.compute_energy(labels = self.labels,
                                     positions = self.positions, 
-                                    neighbours = self.neighbours, 
-                                    distances = self.distances))
+                                    neighbours = self.neighbours_coulomb, 
+                                    distances = self.distances_coulomb))
         return Energy
     
     
@@ -316,7 +352,7 @@ class md(object):
                                                    L =self.L, 
                                                    switch_parameter = self.switch_parameter, 
                                                    r_switch = self.r_switch,
-                                                   neighbours = self.neighbours)+(
+                                                   neighbours = self.neighbours_LJ)+(
         self.coulomb.compute_forces(Positions =self.positions,
                                       Labels = self.labels,
                                       L = self.L) )
@@ -337,24 +373,23 @@ class md(object):
             Array with N rows and 3 columns. Contains each the force acting upon each particle component wise.
         
         """
-        Positions, Velocities, Forces = dynamics().compute_dynamics(
-            self.positions, 
-            self.velocities, 
-            self.forces,
-            self.labels, 
-            self.Sigma_LJ, 
-            self.Epsilon_LJ,
-            self.dt, 
-            self.L,
-            self.std, 
-            self.n_boxes_short_range,
-            self.k_max_long_range,
-            self.switch_parameter,
-            self.p_rea,
-            self.T, 
-            self.r_switch,
-            self.k_cut,
-            self.r_cut_coulomb)
+        Positions, Velocities, Forces = dynamics().velocity_verlet_integrator(self.positions,
+                                                                               self.velocities, 
+                                                                               self.forces, 
+                                                                               self.labels,
+                                                                               self.Sigma_LJ, 
+                                                                               self.Epsilon_LJ,
+                                                                               self.dt,
+                                                                               self.L, 
+                                                                               self.T,
+                                                                               self.switch_parameter, 
+                                                                               self.r_switch,
+                                                                               self.neighbours_LJ,
+                                                                               self.p_rea,
+                                                                               self.coulomb,
+                                                                               self.lennard_jones,
+                                                                               thermostat = True)
+        
         return Positions, Velocities, Forces
     
     def get_Temperature(self):
@@ -371,5 +406,256 @@ class md(object):
         
                          
     
+    def get_traj(self, N_steps, Energy_save, Temperature_save, Frame_save, path):
+        """Propagates the System unitil convergence is reached or the maximum Number of Steps is reached
+
+        Parameters
+        ----------------
+        N_steps: int
+            The number of steps the simulation will maximally run for.
+
+        Energy_save: int
+            The intervall at which energies are measured and saved.
+
+        Temperature_save: int
+            The intervall at which temperatures are measured and saved.
+
+        Frame_save: int
+            The intervall at which frames are created and saved. 
+
+        Path: string
+            Location where results will be saved.
+
+        Returns
+        -----------------
+        "Simulation Completed"
+        Results will be saved in the specified path. Files will be named as follows:
+        Trajectory : traj.xyz
+        Energies: Energies
+        Temperature: Temperature
+
+        """
+        traj_file = ''.join([path,"\\traj.xyz"])
+        Energy_file = ''.join([path,"\\Energies"])
+        Temperature_file = ''.join([path,"\\Temperature"])
+        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+
+        #write header
+        myfile = open(traj_file,'w')
+        myfile.write(str(self.N)+"\n"+"\n")
+        myfile.close()
+
+        frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+        frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+        #Positions in Angstroem
+        frame['var2'] = self.positions[:,0]*1e10
+        frame['var3'] = self.positions[:,1]*1e10
+        frame['var4'] = self.positions[:,2]*1e10  
+
+        myfile = open(traj_file,'ab')
+        np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+        myfile.write(string1)
+        myfile.close()
+
+        Energy = np.zeros(np.ceil(N_steps/Energy_save).astype(int))
+        Temperature = np.zeros(np.ceil(N_steps/Temperature_save).astype(int))
+
+        counter_Energy = 0
+        counter_Temperature = 0
+        counter_Frame = 0
+        E_index = -1
+
+        for i in np.arange(N_steps):
+
+            Positions_New, Velocities_New, Forces_New = self.propagte_system()
+            self.positions = Positions_New
+            self.velocities = Velocities_New
+            self.forces = Forces_New
+            self.neighbours_LJ  = self.get_neighbourlist_LJ()[0]
+
+            counter_Energy += 1
+            counter_Temperature += 1
+            counter_Frame += 1
+
+            #Save Energy
+            if counter_Energy > Energy_save-1:
+                E_index += 1
+                Energy[E_index] = self.get_energy()
+                counter_Energy = 0
+
+            #Save Temperature
+            if counter_Temperature > Temperature_save-1:
+                Temperature[np.floor(i/Temperature_save).astype(int)] = self.get_Temperature()
+                counter_Temperature = 0
+
+            # Save Frame
+            if counter_Frame > Frame_save-1 :
+                #create frame
+                frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+                frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+                #Positions in Angstroem
+                frame['var2'] = self.positions[:,0]*1e10
+                frame['var3'] = self.positions[:,1]*1e10
+                frame['var4'] = self.positions[:,2]*1e10  
+
+                #save frame
+                myfile = open(traj_file,'ab')
+                np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+                myfile.write(string1)
+                myfile.close()
+
+                counter_Frame = 0
+
+            sys.stdout.write("\r")
+            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps \\completed"]))
+            sys.stdout.flush()
+
+        # save Energy       
+        np.savetxt(Energy_file, Energy)
+        # save Temperature         
+        np.savetxt(Temperature_file, Temperature)
+        return "Simulation Completed"
+
     
     
+    
+    
+    
+    
+    def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, constant, path):
+        """Minimizes the Energy by steepest descent
+
+        Parameters
+        ----------------
+        N_steps: int
+            The number of steps the simulation will maximally run for.
+            
+        threshold: float
+            if the line sum norm of the forces falls below the threshold, the minimization is completed
+
+        Energy_save: int
+            The intervall at which energies are measured and saved.
+
+        Frame_save: int
+            The intervall at which frames are created and saved. 
+            
+        constant: float
+            The constant, the forces are multiplied with, to update the positions
+
+        Path: string
+            Location where results will be saved.
+
+        Returns
+        -----------------
+        Means by which the minimization was completed.
+        either "Energy converged" 
+        or "Maximum Number of steps reached
+        
+        Results will be saved in the specified path. Files will be named as follows:
+        Trajectory : traj.xyz
+        Energies: Energies"""
+        
+        traj_file = ''.join([path,"\\traj_minimization.xyz"])
+        Energy_file = ''.join([path,"\\Energies_minimization"])
+        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+
+        #write header
+        myfile = open(traj_file,'w')
+        myfile.write(str(self.N)+"\n"+"\n")
+        myfile.close()
+
+        frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+        frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+        #Positions in Angstroem
+        frame['var2'] = self.positions[:,0]*1e10
+        frame['var3'] = self.positions[:,1]*1e10
+        frame['var4'] = self.positions[:,2]*1e10  
+
+        myfile = open(traj_file,'ab')
+        np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+        myfile.write(string1)
+        myfile.close()
+
+        Energy = np.zeros(np.ceil(N_steps/Energy_save).astype(int))
+
+        counter_Energy = 0
+        counter_Frame = 0
+        E_index = -1
+        
+        for i in np.arange(N_steps):
+        
+            #Update Positions
+            Positions_new = dynamics().steepest_descent(self.positions, self.labels, self.forces,self.L, constant)
+
+            #Update Self
+            self.positions = Positions_new
+            self.neighbours_LJ = self.get_neighbourlist_LJ()[0]
+            self.forces = self.get_forces()
+            
+            counter_Energy += 1
+            counter_Frame += 1
+            #Save Energy
+            if counter_Energy > Energy_save-1:
+                E_index += 1
+                Energy[E_index] = self.get_energy()
+                counter_Energy = 0
+
+            # Save Frame
+            if counter_Frame > Frame_save-1 :
+                #create frame
+                frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+                frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+                #Positions in Angstroem
+                frame['var2'] = self.positions[:,0]*1e10
+                frame['var3'] = self.positions[:,1]*1e10
+                frame['var4'] = self.positions[:,2]*1e10  
+
+                #save frame
+                myfile = open(traj_file,'ab')
+                np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+                myfile.write(string1)
+                myfile.close()
+
+                counter_Frame = 0
+            
+            #show Progress
+            sys.stdout.write("\r")
+            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps completed"]))
+            sys.stdout.flush()
+            
+            # Calculate norm
+            norm_Forces = np.max(np.sum(np.abs(self.forces),1))
+            
+            if norm_Forces < threshold:
+                #create frame
+                frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
+                frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
+
+                #Positions in Angstroem
+                frame['var2'] = self.positions[:,0]*1e10
+                frame['var3'] = self.positions[:,1]*1e10
+                frame['var4'] = self.positions[:,2]*1e10  
+
+                #save frame
+                myfile = open(traj_file,'ab')
+                np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
+
+                myfile.write(string1)
+                myfile.close()
+                
+                # save Energy       
+                np.savetxt(Energy_file, Energy)
+                return "Energy Converged"
+            
+            
+        # save Energy       
+        np.savetxt(Energy_file, Energy)
+        return "Maximum Number of Steps reached"

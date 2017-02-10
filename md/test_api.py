@@ -1,6 +1,6 @@
 #   md - Molecular Dynamics Applied to ionic solids.
 #   Copyright (C) 2017 Nils Harmening, Marco Manni,
-#   Darian Steven Viezzer, Steffanie Kieninger, Henrik Narvaez
+#   Darian Steven Viezzer, Stefanie Kieninger, Henrik Narvaez
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ Coefficients = ip.Coefficients
 Charges = ip.Charges
 N = ip.N*np.sum(Coefficients)
 std = ip.std
-k_cut = ip.k_cut
-k_max = ip.k_max_long_range
+#k_cut = ip.k_cut
+#k_max = ip.k_max_long_range
 n_boxes_short_range = ip.n_boxes_short_range
 n_boxes_LJ = ip.n_boxes_LJ
 r_cut_LJ = ip.r_cut_LJ
@@ -68,7 +68,7 @@ def test_neighborlist():
     N = 100
     R=np.random.rand(N,3)
     box_length=1.0
-    r_cutoff=0.1
+    r_cutoff=0.11
    
     naiveneighbors = {}
     dx = np.empty(3)
@@ -77,7 +77,7 @@ def test_neighborlist():
         for j in range(N):
             d = 0.0
             for x in range(3):
-                dx[x] = R[i][x]-R[j][x]
+                dx[x] = np.abs(R[i][x]-R[j][x])
                 if (dx[x] < -box_length/2):
                     dx[x] += box_length
                 elif (dx[x] > box_length/2):
@@ -87,7 +87,7 @@ def test_neighborlist():
             
             d = np.sqrt(d)
             if (d <= r_cutoff):
-                if (i>j):
+                if i>j:
                     naiveneighbors[i].append(j)
                     naiveneighbors[j].append(i)
 
@@ -103,16 +103,15 @@ def test_neighborlist():
     assert n1 == n2
 
 
-
 def test_SymmetriesPotC():
     #tests coulomb potential function with equidistant charges where the middle one has twice the negativ charge
     from particle_interaction import coulomb
 
     potential        = coulomb(ip.std, ip.n_boxes_short_range,ip.L, ip.k_max_long_range, ip.k_cut)
     result           = potential.compute_potential(positions=ip.positions, labels=ip.labels, neighbours=ip.neighbours, distances=ip.distances)
-    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P3 should be the same."
-    assert ( abs(result[0]/result[1])<0.5+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P2 should be P1*2."
-    assert ( abs(result[2]/result[1])<0.5+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P2 should be P3*2."
+    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P3 should be the same."
+    assert ( abs(result[0]/result[1])<0.5+10**(-8) ) , "Potential does not have the expected symmetrie. P2 should be P1*2."
+    assert ( abs(result[2]/result[1])<0.5+10**(-8) ) , "Potential does not have the expected symmetrie. P2 should be P3*2."
     return
 
 
@@ -122,9 +121,9 @@ def test_SymmetriesPotLJ():
 
     potential = lennard_jones()
     result    = potential.compute_potential(sigma=ip.sigma, epsilon=ip.epsilon, labels=ip.labels, distances=ip.distances, neighbours=ip.neighbours)
-    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P3 should be the same."
-    assert ( abs(result[0]/result[1])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P2 should be the same."
-    assert ( abs(result[2]/result[1])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P3 and P2 should be the same."
+    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P3 should be the same."
+    assert ( abs(result[0]/result[1])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P2 should be the same."
+    assert ( abs(result[2]/result[1])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P3 and P2 should be the same."
     return
 
 
@@ -133,9 +132,9 @@ def test_SymmetriesPotLJ2():
 
     potential = lennard_jones()
     result    = potential.compute_potential(sigma=ip.sigma, epsilon=ip.epsilon, labels=ip.labels, distances={0: [np.sqrt(12), np.sqrt(3)], 1: [np.sqrt(12), np.sqrt(12)], 2: [np.sqrt(3), np.sqrt(12)]}, neighbours=ip.neighbours)
-    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P3 should be the same."
-    assert ( result[0]!=result[1] )                , "Potential does not have the symmetrie that the should follow from the particle position and charge. P1 and P2 should not be the same."
-    assert ( result[2]!=result[1] )                , "Potential does not have the symmetrie that the should follow from the particle position and charge. P3 and P2 should not be the same."
+    assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P3 should be the same."
+    assert ( result[0]!=result[1] )                , "Potential does not have the expected symmetrie. P1 and P2 should not be the same."
+    assert ( result[2]!=result[1] )                , "Potential does not have the expected symmetrie. P3 and P2 should not be the same."
     return
 
     
@@ -161,4 +160,3 @@ def test_LJ_range_forces():
                               r_switch,
                               r_cut_LJ)
     assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
-

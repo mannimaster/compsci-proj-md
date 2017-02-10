@@ -26,7 +26,7 @@ r_cut_LJ = 0.45*L_x
 r_cut_coulomb = 0.45*L_x
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
-p = 10.0
+p_error = 10.0
 
 #Temperature 
 T = 100 # Kelvin 
@@ -53,21 +53,14 @@ L = np.array([L_x, L_y, L_z])
 #Reassignment Probability
 p_rea = dt/tau
 
-#Coulomb interaction sigma
-std = r_cut_coulomb/np.sqrt(2*p)
-
-#K_cut
-k_cut = 2*p/r_cut_coulomb
-
 #number of Boxes to consider for LJ-Potential
 n_boxes_LJ = np.ceil(r_cut_LJ/np.max(L)).astype(int) 
 
 ##number of Boxes to consider for short ranged Potential
 n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
 
-#largest values of k to consider for long range Potential
-k_max_long_range = int(np.floor((k_cut*L[0])/(2*np.pi)))
-
+#Standart Deviation of Gauss Charge Distribution
+std = r_cut_coulomb/np.sqrt(2*p_error)
 
 # Calculate Switch Parameter by solving the following System of linear equations
 #

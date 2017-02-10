@@ -1,3 +1,5 @@
 *pyc
 __pycache__/
 .cache/
+.idea/
+md/api_test.py

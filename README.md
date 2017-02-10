@@ -4,4 +4,4 @@
 [![codecov](https://codecov.io/gh/mannimaster/compsci-proj-md/branch/master/graph/badge.svg)](https://codecov.io/gh/mannimaster/compsci-proj-md)
 
 
-Molecular Dynamics Applied to ionic solids
+Molecular Dynamics applied to ionic compounds
