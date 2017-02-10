@@ -624,28 +624,31 @@ class lennard_jones(__particle_interaction):
 
             Positions_Difference = Positions[i,:] - Positions
             
-            Positions_Difference[:,0] = Positions_Difference[:,0]%(L[0]/2)
-            Positions_Difference[:,1] = Positions_Difference[:,1]%(L[1]/2)
-            Positions_Difference[:,2] = Positions_Difference[:,2]%(L[2]/2)
+            Positions_Difference[:,0] = np.remainder(Positions_Difference[:,0],(L[0]/2))
+            Positions_Difference[:,1] = np.remainder(Positions_Difference[:,1],(L[1]/2))
+            Positions_Difference[:,2] = np.remainder(Positions_Difference[:,2],(L[2]/2))
+            
+            #Calculate the Distances
+            dist = np.linalg.norm(Positions_Difference, axis = 1)
+            dist_8 = dist**8
+            dist_2 = dist**2
             for j in neighbours[i]:
-                #Calculate the Distances 
-                dist = np.linalg.norm(Positions_Difference[j,:])  #COMMENT (@skieninger): I think you can use the absolut distances we get from the neighbour list. dist == distances[i][j]
 
                 #Calculate the Value of the switch Function
-                Switch = (switch_parameter[0]+switch_parameter[1]*dist+switch_parameter[2]*dist**2+switch_parameter[3]*dist**3)
+                Switch = (switch_parameter[0]+switch_parameter[1]*dist[j]+switch_parameter[2]*dist_2[j]+switch_parameter[3]*dist[j]*dist_2[j])
                 #Calculate the derivate of the switch Function
-                d_Switch = (switch_parameter[1]/(2*np.sqrt(dist)) +switch_parameter[2] + 1.5*switch_parameter[3]*np.sqrt(dist))
+                d_Switch = (switch_parameter[1]/(2*np.sqrt(dist[j])) +switch_parameter[2] + 1.5*switch_parameter[3]*np.sqrt(dist[j]))
 
                 #sigma to distance ratio
-                sig6_dist_ratio = sig6[j] /dist**6
+                sig6_dist_ratio = sig6[j] /dist[j]**6
 
-                if dist < r_switch:
+                if dist[j] < r_switch:
                     #This is the Analytical Expression for the LJ force
-                    Force_LJ[i,:] += 48.0 *eps[j] *sig6[j] *Positions_Difference[j,:] /dist**8 *(-sig6_dist_ratio +0.5)
+                    Force_LJ[i,:] += 48.0 *eps[j] *sig6[j] *Positions_Difference[j,:] /dist_8[j] *(-sig6_dist_ratio +0.5)
                 else:
                     #This is the derivative of the switch-function, used to cut the LJ-Potential
                     Force_LJ[i,:] += 8.0 *eps[j] *Positions_Difference[i,:] *sig6_dist_ratio*(
-                    (6 /dist**2*(-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1)) 
+                    (6 /dist_2[j]*(-sig6_dist_ratio +0.5)*Switch ) +(d_Switch)*( sig6_dist_ratio-1)) 
 
         return Force_LJ
      

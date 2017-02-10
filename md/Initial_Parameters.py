@@ -24,10 +24,10 @@ L = np.array([L_x, L_y, L_z])
 r_cut_LJ = 0.4*L_x
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 0.4*L_x
+r_cut_coulomb = 2*L_x
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
-p_error = 20.0
+p_error = 10.0
 
 #Temperature 
 T = 100 # Kelvin 
@@ -56,9 +56,6 @@ n_boxes_LJ = np.ceil(r_cut_LJ/np.max(L)).astype(int)
 
 ##number of Boxes to consider for short ranged Potential
 n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
-
-#Standart Deviation of Gauss Charge Distribution
-std = r_cut_coulomb/np.sqrt(2*p_error)
 
 # Calculate Switch Parameter by solving the following System of linear equations
 #
