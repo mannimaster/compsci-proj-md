@@ -1,2 +1,5 @@
 include versioneer.py
 include md/_version.py
+
+# include extension code
+recursive-include md/_ext *.pyx *.c *.h
