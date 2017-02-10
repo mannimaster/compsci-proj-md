@@ -18,13 +18,12 @@ N = 10
 L_x=0.1
 L_y=0.1
 L_z=0.1
-L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 0.07
+r_cut_LJ = 0.45*L_x
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 0.07
+r_cut_coulomb = 0.45*L_x
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
 p_error = 10.0
@@ -43,7 +42,10 @@ assert tau>dt, "tau must be larger than dt"
 r_switch = r_cut_LJ*0.9
 assert r_switch < r_cut_LJ, "switch radius must be smaller than LJ cutoff Radius"
 
-# !!!  DO NOT CHANGE THESE LINES  !!!
+###############################################
+# !!!  DO NOT CHANGE THE FOLLOWING LINES  !!! #
+###############################################
+
 
 # Summarizing Dimension in one array
 L = np.array([L_x, L_y, L_z])
