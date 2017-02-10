@@ -38,8 +38,8 @@ Sys= System(Symbols, Coefficients, Charges, N/2)
 Sigma, Epsilon = Sys.get_LJ_parameter()
 p_error = ip.p
 switch_parameter = ip.switch_parameter
-Test_Positions = np.array([[1,0,0],
-                           [2,0,0]])
+Test_Positions = np.array([[1,1,1],
+                           [2,2,2]])
 Test_R = np.linalg.norm(Test_Positions)
 Test_L = ip.L
 Test_Labels = np.array([[1,+1.0,0],
@@ -72,7 +72,7 @@ def test_coulomb_forces():
     Force = c.compute_forces(Test_Positions,
                              Test_Labels,
                              Test_L)
-    assert (Force[0,0] == -Force[1,0]), "coulomb force is broken"
+    assert np.all(Force[0,0] == -Force[1,0]), "coulomb force is broken"
     
 def test_LJ_forces():
     LJ = lennard_jones()
