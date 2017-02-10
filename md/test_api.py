@@ -64,7 +64,27 @@ def test_get_dircetions():
     assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
     return "Passed"
 
-
+def test_coulomb_forces():
+    c = coulomb(n_boxes_short_range,
+                Test_L,
+                p_error)
+    c.compute_optimal_cutoff(Test_Positions, Test_Labels, Test_L, p_error)
+    Force = c.compute_forces(Test_Positions,
+                             Test_Labels,
+                             Test_L)
+    assert (Force[0,0] == -Force[1,0]), "coulomb force is broken"
+    
+def test_LJ_forces():
+    LJ = lennard_jones()
+    Force = LJ.compute_forces(Test_Positions,
+                              Sigma,
+                              Epsilon,
+                              Test_Labels,
+                              Test_L,
+                              switch_parameter,
+                              r_switch,
+                              neighbours)
+    assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
 
 def test_neighborlist():
     N = 100
@@ -137,24 +157,4 @@ def test_SymmetriesPotLJ2():
     return
 
     
-def test_coulomb_forces():
-    c = coulomb(n_boxes_short_range,
-                Test_L,
-                p_error)
-    c.compute_optimal_cutoff(Test_Positions, Test_Labels, Test_L, p_error)
-    Force = c.compute_forces(Test_Positions,
-                             Test_Labels,
-                             Test_L)
-    assert np.all(Force[0,0] == -Force[1,0]), "coulomb force is broken"
-    
-def test_LJ_forces():
-    LJ = lennard_jones()
-    Force = LJ.compute_forces(Test_Positions*1e-9,
-                              Sigma,
-                              Epsilon,
-                              Test_Labels,
-                              Test_L,
-                              switch_parameter,
-                              r_switch,
-                              neighbours)
-    assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
+
