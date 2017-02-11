@@ -249,7 +249,7 @@ class md(object):
     def __get_switch_parameter(self):
         A = np.array([ 
             [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
-            [1, self.r_cut_coulomb, self.r_cut_coulomb**2, self.r_cut_coulomb**3],
+            [1, self.r_cut_LJ, self.r_cut_LJ**2, self.r_cut_LJ**3],
             [0, 1, 2*self.r_switch, 3*self.r_switch**2], 
             [0, 0, 2, 6*self.r_switch]])
         switch_parameter = np.dot(np.linalg.inv(A), np.array([1,0,1,1]))
