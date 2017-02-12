@@ -93,7 +93,7 @@ def test_neighborlist():
     box_length=1.0
     r_cutoff=0.11
 
-    n1 = naiveneighbors(R,box_length,r_cutoff)
+    n1 = naive_neighborlist(R,box_length,r_cutoff)
 
     from neighbourlist import neighbourlist as nbl
     n_inst = nbl()
@@ -110,7 +110,7 @@ def test_fast_neighborlist():
     R=np.random.rand(N,3)
     box_length=1.0
     r_cutoff=0.11
-    n1 = naiveneighbors(R,box_length,r_cutoff)
+    n1 = naive_neighborlist(R,box_length,r_cutoff)
     import cython
     import pyximport
     pyximport.install()
