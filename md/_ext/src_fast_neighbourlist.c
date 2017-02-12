@@ -16,7 +16,7 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
+double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff)
 {
     // assume same size in all N dimension
     int n_cells = (int) box_length / r_cutoff;
@@ -76,7 +76,7 @@ double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
                     if (i<j)  {
                       double rij=0.0;
                       // Image corrected relative pair position
-                      for (int dim=0; dim<3; dim++) rij += R[i][dim]-(R[j][dim]+rshift);
+                      for (int dim=0; dim<3; dim++) rij += R[i][dim]-(R[j][dim]+rshift[dim]);
                       if (rij<=r_cutoff) {
                         dist[i][j]=rij;
                         dist[j][i]=rij;
@@ -92,5 +92,5 @@ double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
             }
         }
     }
-    return dist;
+    return dist[N][N];
 }

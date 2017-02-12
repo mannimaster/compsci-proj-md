@@ -20,7 +20,7 @@ cimport numpy as np
 
 
 cdef extern from 'src_fast_neighbourlist.h':
-  double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
+  double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff)
 
 
 def fast_neighbourlist(
@@ -34,7 +34,7 @@ def fast_neighbourlist(
         int k
     
     dist = _fast_neighbourlist(
-        <double*> np.PyArray_DATA(R), R.shape[0], box_length, r_cutoff)
+        <double**> np.PyArray_DATA(R), R.shape[0], box_length, r_cutoff)
 
     neighbors = {}
     distances = {}
