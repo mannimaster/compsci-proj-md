@@ -28,13 +28,13 @@ def fast_neighbourlist(
     double box_length, double r_cutoff):
 
     cdef:
-        np.ndarray[double, ndim=2, mode='c'] dist
+        np.ndarray[np.double_t, ndim=2, mode='c'] dist
         int i
         int j
         int k
     
     dist = _fast_neighbourlist(
-        <double*> np.PyArray_DATA(R), R.shape[0], box_length, r_cutoff)
+        <double**> np.PyArray_DATA(R), R.shape[0], box_length, r_cutoff)
 
     neighbors = {}
     distances = {}
