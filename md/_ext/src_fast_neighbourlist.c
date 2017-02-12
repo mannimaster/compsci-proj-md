@@ -16,94 +16,81 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-double _fast_neighbourlist(double *R, double box_length, double r_cutoff)
+double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
 {
-  return 5;
+    // assume same size in all N dimension
+    int n_cells = (int) box_length / r_cutoff;
+    // divide simulation box into small cells of equal size r_c >= r_cutoff
+    double r_c = box_length / n_cells;
+    
+    
+    // define head and list 
+    int head[n_cells*n_cells*n_cells];
+    int cllist[N];
+    int x[3];
+    for (int c=0; c<n_cells*n_cells*n_cells; c++) head[c] = -1;
+    // Loop over all particles to construct header (head) and linked lists (cllist)
+    for (int i=0; i<N; i++) {
+        /* Vector cell index to which this atom belongs */
+        for (int dim=0; dim<3; dim++) x[dim] = R[i][dim]/r_c;
+        int cell_index = x[0]*n_cells*n_cells+x[1]*n_cells+x[2];
+        // Link to the previous occupant (or EMPTY if it's the 1st)
+        cllist[i] = head[cell_index];
+        // The last one goes to the header
+        head[cell_index] = i;
+    }
+
+
+
+    // Scan inner cells
+    int y[3];
+    double rshift[3];
+    double dist[N][N];
+    for (x[0]=0; x[0]<n_cells; (x[0])++)
+    for (x[1]=0; x[1]<n_cells; (x[1])++)
+    for (x[2]=0; x[2]<n_cells; (x[2])++) {
+        int cell_index = x[0]*n_cells*n_cells+x[1]*n_cells+x[2];
+        // Scan the neighbor cells (including itself)
+        for (y[0]=x[0]-1; y[0]<=x[0]+1; (y[0])++)
+        for (y[1]=x[1]-1; y[1]<=x[1]+1; (y[1])++)
+        for (y[2]=x[2]-1; y[2]<=x[2]+1; (y[2])++) {
+            // Periodic boundary condition by shifting coordinates
+            for (int dim=0; dim<3; dim++) {
+                if (x[dim] < 0)
+                    rshift[dim] = -box_length;
+                else if (y[dim]>=n_cells)
+                    rshift[dim] = box_length;
+                else
+                    rshift[dim] = 0.0;
+            }
+            // Calculate the scalar cell index of the neighbor cell */
+            int cell_indy = ((y[0]+n_cells)%n_cells)*n_cells
+              +((y[1]+n_cells)%n_cells)*n_cells
+              +((y[2]+n_cells)%n_cells);
+            // Scan atom i in cell cell_index
+            int i = head[cell_index];
+            while (i != -1) {
+                // Scan atom j in neighboring cell
+                int j = head[cell_indy];
+                while (j != -1) {
+                    if (i<j)  {
+                      double rij=0.0;
+                      // Image corrected relative pair position
+                      for (int dim=0; dim<3; dim++) rij += R[i][dim]-(R[j][dim]+rshift);
+                      if (rij<=r_cutoff) {
+                        dist[i][j]=rij;
+                        dist[j][i]=rij;
+                      }
+                      else {
+                        dist[i][j]=0.0;
+                        dist[i][j]=0.0;
+                      }
+                    }
+                    j = cllist[j];
+                }
+                i = cllist[i];
+            }
+        }
+    }
+    return dist;
 }
-
-
-/*
-
-        N, dim = np.shape(R)
-        # assume same size in all N dimensions
-        n_cells = np.int(box_length / r_cutoff)
-        # divide simulation box into small cells of equal size r_c >= r_cutoff
-        r_c = box_length / n_cells 
-
-        #define head and list 
-        head = [-1] * n_cells**3
-        cllist = [-1] * N
-        for i in range(0, N):
-            #empty list of neighbors
-            neighbors[i] = []
-            distances[i] = []
-            # cell index of particle by its position
-            x = np.int(R[i][0] / r_c)
-            y = np.int(R[i][1] / r_c)
-            z = np.int(R[i][2] / r_c)
-            ind_vec = np.int(box_length / r_c)
-            cell_index = x*ind_vec*ind_vec + y*ind_vec + z
-            cllist[i] = head[cell_index]
-            # The last one goes to the head
-            head[cell_index] = i
-
-
-        # For all cells: Look for neighbors within neighboring cells
-        for cell in range(n_cells**3):
-            x = cell/(ind_vec*ind_vec)
-            y = (cell/ind_vec) % ind_vec
-            z = cell % ind_vec
-
-            nb = np.empty(dim)
-            r_shift = np.empty(dim)
-            # Scan the neighboring cells (including itself)
-            nb[0] = x-1
-            nb[1] = y-1
-            nb[2] = z-1
-            for nbcell_ind in range(1,3**3+1):
-                if nbcell_ind != 1:
-                    nb[2] += 1
-                if nbcell_ind % 3 == 0:
-                    nb[2] = z-1
-                    nb[1] += 1
-                if nbcell_ind % 9 == 0:
-                    nb[1] = y-1
-                    nb[0] += 1
-
-                # Shift image position of simulation box?
-                for d in range(dim):
-                    if (nb[d] < 0):
-                        r_shift[d] = -box_length
-                    elif (nb[d]>=ind_vec):
-                        r_shift[d] = box_length
-                    else:
-                        r_shift[d] = 0.0
-                  
-                # Calculate cell index nbcell of neighbor cell
-                nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
-                          + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
-                          + ((nb[2]+ind_vec)%ind_vec))
-                # where % pulls index back into appr. range
-
-                # Scan particle i in cell 
-                i = head[cell]
-                while(i != -1):
-                # Scan particle j in cell nbcell
-                    j = head[nbcell]
-                    while(j != -1):
-                    # Avoid double counting of pair (i, j)
-                        if (i<j):
-                            # dist of i, j smaller than cutoff?
-                            dist = np.linalg.norm(R[i]-(R[j]+r_shift))
-                            if (dist <= r_cutoff):
-                                neighbors[i].append(j)
-                                distances[i].append(dist)
-                                neighbors[j].append(i)
-                                distances[j].append(dist)
-
-
-                        j = cllist[j]
-                    i = cllist[i]
-                                    
-        return neighbors, distances
-*/

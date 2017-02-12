@@ -20,25 +20,22 @@ cimport numpy as np
 
 
 cdef extern from 'src_fast_neighbourlist.h':
-  double _fast_neighbourlist(double *R, double box_length, double r_cutoff)
+  double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
 
 
 def fast_neighbourlist(
     np.ndarray[double, ndim=2, mode='c'] R not None,
     double box_length, double r_cutoff):
+
     cdef:
-        np.ndarray[int, ndim=2, mode='c'] neigh
         np.ndarray[double, ndim=2, mode='c'] dist
         int i
         int j
+        int k
+        int N = R.shape[0]
     
-    """
-    neigh, dist = _fast_neighbourlist(
-            <double*> np.PyArray_DATA(R), box_length, r_cutoff)
-    """
-    cdef double t
-    t = _fast_neighbourlist(
-            <double*> np.PyArray_DATA(R), box_length, r_cutoff)
+    dist = _fast_neighbourlist(
+        <double*> np.PyArray_DATA(R), N, box_length, r_cutoff)
 
     neighbors = {}
     distances = {}
@@ -46,13 +43,13 @@ def fast_neighbourlist(
         #empty list of neighbors
         neighbors[i] = []
         distances[i] = []
-        for j in range(i+1, R.shape[0]):
-            #if neigh[i,j]:
+        j = 0
+        k = 0
+        for j in range(R.shape[0]):
+            if i<j and dist[i][j]!=0.0:
                 neighbors[i].append(j)
-                #distances[i].append(dist[i,j])
                 neighbors[j].append(i)
-                #distances[j].append(dist[i,j])
+                distances[i].append(dist[i][j])
+                distances[j].append(dist[j][i])
 
     return neighbors, distances
-
-
