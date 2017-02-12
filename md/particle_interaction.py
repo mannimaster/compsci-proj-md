@@ -311,7 +311,7 @@ class  coulomb(__particle_interaction):
 
         return return_vector.real
 
-    def compute_energy(self,labels,positions, neighbours, distances):
+    def compute_energy(self,labels,positions, neighbours, distances, r_s, r_c):
 
         ''' Calculate the total coloumb energy
 
@@ -336,9 +336,9 @@ class  coulomb(__particle_interaction):
                     float value of the total coloumb energy
         '''
 
-        return self.__short_range_energy(labels, neighbours, distances) + self.__long_range_energy(labels,positions)
+        return self.__short_range_energy(labels, neighbours, distances, r_s, r_c) + self.__long_range_energy(labels,positions)
 
-    def __short_range_energy(self, labels, neighbours, distances):
+    def __short_range_energy(self, labels, neighbours, distances, r_s, r_c):
         
         ''' Calculate the total short range energy of the system
 
@@ -361,7 +361,7 @@ class  coulomb(__particle_interaction):
         '''
 
         #calculates the short range potential
-        short_range_potential = self.__short_range_potential(labels, neighbours, distances)
+        short_range_potential = self.__short_range_potential(labels, neighbours, distances, r_s, r_c)
 
         return 0.5 * np.sum(np.multiply(short_range_potential,labels[:,1]))
     
@@ -596,7 +596,7 @@ class lennard_jones(__particle_interaction):
                     shortPotentialL[i] += self.__switchFunction(absDistance,r_s,r_c)*(4 * epsilon[int(labels[i, 2] + labels[j, 2])] * (sigmaPoSix ** 2 - sigmaPoSix))
         return shortPotentialL
 
-    def compute_energy(self, sigma, epsilon, labels, neighbours, distances):
+    def compute_energy(self, sigma, epsilon, labels, neighbours, distances, r_s, r_c):
         
         ''' Calculate the total Lennard-Jones energy
 
@@ -623,7 +623,7 @@ class lennard_jones(__particle_interaction):
         total energy : float
             float value of the total Lennard-Jones energy
         '''
-        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances)
+        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances, r_s=r_s, r_c=r_c)
 
         return np.sum(energy_LJ)
     
