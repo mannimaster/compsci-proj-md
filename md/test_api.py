@@ -96,6 +96,9 @@ def test_neighborlist():
     n1 = naiveneighbors
     n_inst = nbl()
     n2, dist2 = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
+    import cython
+    import pyximport
+    pyximport.install()
     from _ext.fast_neighbourlist import fast_neighbourlist as fnbl
     n3, dist3 = fnbl(R, box_length, r_cutoff)
     for i in range(N):
