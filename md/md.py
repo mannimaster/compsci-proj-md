@@ -46,12 +46,13 @@ class System(object):
         m[:self.n*self.Coefficients[0]] = PSE[ self.Symbols[0] ][1].astype('float64')
         for j in np.arange((np.size(self.Coefficients)-1)):
             m[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = PSE[ self.Symbols[j+1] ][1].astype('float64')
-        m *= 1.660539040e-27  # Correcting Unit, amu --> kg
-        
+        m *= 1.660539040e-27  / (1000 * 1,66057788 * 10**-24)# Correcting Unit, amu --> g/Mol
+
+
         q[:self.n*self.Coefficients[0]] = self.Charges[0]
         for j in np.arange((np.size(self.Coefficients)-1)):
             q[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = self.Charges[j+1]
-        q *= 1.6021766208e-19 #Correcting Unit, 1 --> C
+        q *= 1 #Correcting Unit, e --> e  [1.6021766208e-19C]
 
 
         index = np.zeros(np.size(self.Symbols))
@@ -448,9 +449,12 @@ class md(object):
         frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
         #Positions in Angstroem
-        frame['var2'] = self.positions[:,0]*1e10
-        frame['var3'] = self.positions[:,1]*1e10
-        frame['var4'] = self.positions[:,2]*1e10  
+        #frame['var2'] = self.positions[:,0]*1e10
+        #frame['var3'] = self.positions[:,1]*1e10
+        #frame['var4'] = self.positions[:,2]*1e10
+        frame['var2'] = self.positions[:, 0]
+        frame['var3'] = self.positions[:, 1]
+        frame['var4'] = self.positions[:, 2]
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
@@ -497,9 +501,12 @@ class md(object):
                 frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
                 #Positions in Angstroem
-                frame['var2'] = self.positions[:,0]*1e10
-                frame['var3'] = self.positions[:,1]*1e10
-                frame['var4'] = self.positions[:,2]*1e10  
+                #frame['var2'] = self.positions[:,0]*1e10
+                #frame['var3'] = self.positions[:,1]*1e10
+                #frame['var4'] = self.positions[:,2]*1e10
+                frame['var2'] = self.positions[:,0]
+                frame['var3'] = self.positions[:,1]
+                frame['var4'] = self.positions[:,2]
 
                 #save frame
                 myfile = open(traj_file,'ab')
@@ -574,9 +581,12 @@ class md(object):
         frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
         #Positions in Angstroem
-        frame['var2'] = self.positions[:,0]*1e10
-        frame['var3'] = self.positions[:,1]*1e10
-        frame['var4'] = self.positions[:,2]*1e10  
+        #frame['var2'] = self.positions[:,0]*1e10
+        #frame['var3'] = self.positions[:,1]*1e10
+        #frame['var4'] = self.positions[:,2]*1e10
+        frame['var2'] = self.positions[:,0]
+        frame['var3'] = self.positions[:,1]
+        frame['var4'] = self.positions[:,2]
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
@@ -616,9 +626,12 @@ class md(object):
                 frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
                 #Positions in Angstroem
-                frame['var2'] = self.positions[:,0]*1e10
-                frame['var3'] = self.positions[:,1]*1e10
-                frame['var4'] = self.positions[:,2]*1e10  
+                #frame['var2'] = self.positions[:,0]*1e10
+                #frame['var3'] = self.positions[:,1]*1e10
+                #frame['var4'] = self.positions[:,2]*1e10
+                frame['var2'] = self.positions[:, 0]
+                frame['var3'] = self.positions[:, 1]
+                frame['var4'] = self.positions[:, 2]
 
                 #save frame
                 myfile = open(traj_file,'ab')
@@ -644,9 +657,12 @@ class md(object):
                 frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
                 #Positions in Angstroem
-                frame['var2'] = self.positions[:,0]*1e10
-                frame['var3'] = self.positions[:,1]*1e10
-                frame['var4'] = self.positions[:,2]*1e10  
+                #frame['var2'] = self.positions[:,0]*1e10
+                #frame['var3'] = self.positions[:,1]*1e10
+                #frame['var4'] = self.positions[:,2]*1e10
+                frame['var2'] = self.positions[:, 0]
+                frame['var3'] = self.positions[:, 1]
+                frame['var4'] = self.positions[:, 2]
 
                 #save frame
                 myfile = open(traj_file,'ab')
