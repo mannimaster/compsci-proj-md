@@ -28,11 +28,6 @@ N = 32
 L_x=22.56
 L_y=22.56
 L_z=22.56
-L = np.array([L_x, L_y, L_z])
-#Boxsize
-#L_x=2.256e-09
-#L_y=2.256e-09
-#L_z=2.256e-09
 
 
 # LJ Cutoff Radius in Angström
@@ -46,8 +41,8 @@ p_error = 10.0
 # Temperature in Kelvin
 T = 100 # Kelvin 
 
-# Timestep in femtoseconds
-dt = 0.1
+# Timestep in seconds
+timestep = 0.1e-15
 
 #Characetristic coupling time for Thermostat in femtoseconds
 # must be larger than dt
@@ -75,3 +70,5 @@ p_rea = dt/tau
 
 ##number of Boxes to consider for short ranged Potential
 n_boxes_short_range = ( np.ceil((L_x / (float)(2))/np.max(L)) ).astype(int)
+
+dt = timestep/48.8882*1e15 #correcting Unit s --> dt = 48.8882 fs = 48.8882e-15 s
