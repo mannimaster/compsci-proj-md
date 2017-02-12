@@ -46,7 +46,7 @@ class System(object):
         m[:self.n*self.Coefficients[0]] = PSE[ self.Symbols[0] ][1].astype('float64')
         for j in np.arange((np.size(self.Coefficients)-1)):
             m[self.n*np.cumsum(self.Coefficients)[j]:self.n*np.cumsum(self.Coefficients)[j+1]] = PSE[ self.Symbols[j+1] ][1].astype('float64')
-        m *= 1.660539040e-27  / (1000 * 1,66057788 * 10**-24)# Correcting Unit, amu --> g/Mol
+        m *= 1# Correcting Unit, g/Mol --> g/Mol
 
 
         q[:self.n*self.Coefficients[0]] = self.Charges[0]
