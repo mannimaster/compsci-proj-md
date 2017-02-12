@@ -87,6 +87,7 @@ class System(object):
             for j in index:
                 l2_j = np.log2(j+1).astype(int)
                 Epsilon[i+j] = np.sqrt(PSE[self.Symbols[l2_i]][3].astype(float)*PSE[self.Symbols[l2_j]][3].astype(float))
+        Epsilon *= (4184/6.022e23) #Convert Unit kcal/mol --> J
         return Sigma, Epsilon
     
     
