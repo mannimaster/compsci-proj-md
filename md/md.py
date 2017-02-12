@@ -308,11 +308,15 @@ class md(object):
                                                          epsilon = self.Epsilon_LJ, 
                                                          labels = self.labels,
                                                          neighbours = self.neighbours_LJ,
-                                                         distances = self.distances_LJ)+(
+                                                         distances = self.distances_LJ,
+                                                         r_s=self.r_switch,
+                                                         r_c=self.r_cut_coulomb)+(
         self.coulomb.compute_potential(labels = self.labels,
                                        positions = self.positions,
                                        neighbours = self.neighbours_coulomb,
-                                       distances = self.distances_coulomb))
+                                       distances = self.distances_coulomb,
+                                       r_s=self.r_switch,
+                                       r_c=self.r_cut_coulomb))
         
         return Potential
     
