@@ -55,18 +55,8 @@ class  coulomb(__particle_interaction):
         self.n_boxes_short_range = n_boxes_short_range
         self.constant = 1 / (8 * np.pi * epsilon_0)        # prefactor for the short range potential/forces
         self.volume = L[0] ** 3                            # Volume of box
-
-        k_max_long_range = np.ceil(k_cut * L[0] / (float)(2 * np.pi))
-
-        #in dependency of k_max_long_range and the box length L all linear combination are computed
-        lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
-        #the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
-        #lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
-        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) == 0)), axis=0)
-        #all k-vectors (rows) that are longer than k_cut are deleted
-        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > k_cut)), axis=0)
-        
-        return 
+        self.k_list = self.__create_k_list(k_cut,L[0])
+        return
 
     def compute_optimal_cutoff(self, Positions, Labels, L, p_error):
 
@@ -83,20 +73,29 @@ class  coulomb(__particle_interaction):
 
         factor = 8 * np.pi * Positions.shape[1] ** 2 * R_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
 
-        R_opt_cut = (p_error / (float)(np.pi)) ** 0.5 * (factor * T_k / (float)(T_r)) ** (1 / 6) * (L[0] / (Positions.shape[1] ** (1 / 6)))
+        R_opt_cut = np.sqrt(p_error / (float)(np.pi)) * (factor * T_k / (float)(T_r)) ** (1 / 6.0) * (L[0] / (Positions.shape[1] ** (1 / 6.0)))
         K_opt_cut = 2 * p_error / R_opt_cut
 
-
-        k_max_long_range = np.ceil(K_opt_cut * L[0] / (float)(2 * np.pi))
-        # in dependency of k_max_long_range and the box length L all linear combination are computed
-        lincomb_k = directions(k_max_long_range).get_directions() * (2 * np.pi / L)
-        # the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
-        lincomb_k = np.delete(lincomb_k, (len(lincomb_k) - 1) / 2, axis=0)
-        # all k-vectors (rows) that are longer than k_cut are deleted
-        self.k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) > K_opt_cut)), axis=0)
+        self.k_list = self.__create_k_list(K_opt_cut,L[0])
         self.std = np.sqrt(2 * p_error) / (float)(K_opt_cut)
 
         return (R_opt_cut, K_opt_cut, self.std)
+
+    def __create_k_list(self, k_cutoff, boxlength):
+
+        # maximum factor for k (k_max = 2*pi/L *n_max)
+        n_max = np.ceil(k_cutoff * boxlength / (float)(2 * np.pi))
+        # in dependency of n_max and the box length all linear combination are computed
+        lincomb_k = directions(n_max).get_directions() * (2 * np.pi / boxlength)
+        # the row k(k1,k2,k3) = [0,0,0] is deleted, as this one is not needed
+        k_list = np.delete(lincomb_k, (np.where(np.linalg.norm(lincomb_k, axis=1) == 0)), axis=0)
+        # all k-vectors (rows) that are longer than k_cut are deleted
+        k_list = np.delete(k_list, (np.where(np.linalg.norm(k_list, axis=1) > k_cutoff)), axis=0)
+
+        if any(np.equal(k_list, [0, 0, 0]).all(1)):
+            raise ValueError('The list for the k_values contains the prohibited row [0,0,0]')
+
+        return k_list
 
     def compute_potential(self,labels, positions, neighbours, distances):
         """
@@ -182,7 +181,7 @@ class  coulomb(__particle_interaction):
         '''
         
         # initializes all necessary arrays, which will be reused => COMMENT (@daviezz): I Would delete them here. They get over written anyway.
-        #matrix = np.zeros((self.k_list.shape[1],len(positions)))
+        #matrix = np.zeros((self.k_list.shape[1],positions.shape[1]))
         #vector = np.zeros(self.k_list.shape[1])
         #return_vector = np.zeros(positions.shape[1])
 

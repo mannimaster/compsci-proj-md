@@ -189,7 +189,7 @@ class md(object):
         self.n_boxes_short_range= n_boxes_short_range
         
         # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
-        self.coulomb = coulomb(n_boxes_short_range, box, p_error)
+        self.coulomb = coulomb(n_boxes_short_range, box, p_error, epsilon0 = (8.854 * 10**-12) / (36.938 * 10**-9))
         self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
         self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
         self.r_switch = r_switch
@@ -516,14 +516,8 @@ class md(object):
         np.savetxt(Energy_file, Energy)
         # save Temperature         
         np.savetxt(Temperature_file, Temperature)
-        print "Simulation Completed"
+        print ("Simulation Completed")
         return
-
-    
-    
-    
-    
-    
     
     def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, constant, path):
         """Minimizes the Energy by steepest descent
@@ -652,11 +646,11 @@ class md(object):
                 
                 # save Energy       
                 np.savetxt(Energy_file, Energy)
-                print "Energy Converged"
+                print ("Energy Converged")
                 return 
             
             
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        print "Maximum Number of Steps reached"
+        print ("Maximum Number of Steps reached")
         return
