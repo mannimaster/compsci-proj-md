@@ -83,7 +83,7 @@ double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff
                       }
                       else {
                         dist[i][j]=0.0;
-                        dist[i][j]=0.0;
+                        dist[j][i]=0.0;
                       }
                     }
                     j = cllist[j];
