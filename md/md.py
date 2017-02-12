@@ -7,6 +7,7 @@ from neighbourlist import neighbourlist
 from particle_interaction import coulomb
 from particle_interaction import lennard_jones
 from dynamics import dynamics
+from scipy.constants import epsilon_0
 import sys
 PSE = PSE.PSE
 
@@ -190,7 +191,7 @@ class md(object):
         self.n_boxes_short_range= n_boxes_short_range
         
         # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
-        self.coulomb = coulomb(n_boxes_short_range, box, p_error, epsilon0 = (8.854 * 10**-12) / (36.938 * 10**-9))
+        self.coulomb = coulomb(n_boxes_short_range, box, p_error, epsilon0 = epsilon_0 * (8.854 * 10**-12) / (36.938 * 10**-9))
         self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
         self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
         self.r_switch = r_switch
