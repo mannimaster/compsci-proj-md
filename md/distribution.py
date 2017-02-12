@@ -22,7 +22,7 @@ class maxwellboltzmann(__distribution):
         #probably implementable, otherwise a NotImplementedError as well ?
         return
 
-    def sample_distribution(self,N,m,T,kB = kB):
+    def sample_distribution(self,N,m,T,kB = 0.0001987191):
         ''' Sample velocities from the Maxwell-Boltzmann Distribution for a given chemical species
                             Parameters
                             ------------
@@ -40,6 +40,8 @@ class maxwellboltzmann(__distribution):
                                 contains the velocities of each particle
                             '''
         sigma = kB*T/m
+        sigma*= 4184 #Correcting Unit kcal --> J = kg*m^2/s^2
+        sigma*= 1000 #Correcting Unit kg*m^2/s^2 --> g*m^2/s^2
         Velocities = np.zeros((N,3))
         v_x = np.sqrt(sigma)*np.random.normal(size=N)
         v_y = np.sqrt(sigma)*np.random.normal(size=N)
@@ -48,4 +50,7 @@ class maxwellboltzmann(__distribution):
         Velocities[:,0]= v_x
         Velocities[:,1]= v_y
         Velocities[:,2]= v_z
+        
+        Velocities *= 1e10 #Correcting Unit m/s --> A/s
+        Velocities *= 48.8882e-15 #Correcting Unit A/s --> A/dt dt = 48.8882 fs = 48.8882e-15 s
         return Velocities
