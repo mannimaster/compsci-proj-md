@@ -12,7 +12,7 @@ L_z=3.
 L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 1.5
+r_cut_LJ = 1.0
 
 #Short-Range Potential Cutoff Radius
 r_cut_coulomb = 1.5
@@ -43,6 +43,7 @@ switch_parameter = np.array([1,-1,0,0])
 
 #distance where the switch-function kicks in (Lennard-Jones-Forces)
 r_switch = r_cut_LJ*0.8
+
 ###############################################
 # !!!  DO NOT CHANGE THE FOLLOWING LINES  !!! #
 ###############################################
@@ -68,4 +69,22 @@ n_boxes_short_range = ( np.ceil(r_cut_coulomb/np.max(L)) ).astype(int)
 #largest values of k to consider for long range Potential
 k_max_long_range = int(np.floor((k_cut*L[0])/(2*np.pi)))
 
-
+# Calculate Switch Parameter by solving the following System of linear equations
+#
+# A*switch_parameters = [1, 0, 1, 1]
+# <=> switch_parameters = A^-1 * [1, 0, 1, 1]
+#
+# s(x) = a + bx + cx^2 + d*x^3
+# s'(x) = b + 2cx + 3dx^2
+# s''(x) = 2c + 6dx
+# (I):    s(r_switch) = 1
+# (II):   s(r_cutoff) = 0
+# (III): s'(r_switch) = 1
+# (IV):  s''(r_switch = 1
+A= np.array([
+        [1, r_switch, r_switch**2, r_switch**3],
+        [1, r_cut_LJ, r_cut_LJ**2, r_cut_LJ**3],
+        [0, 1, 2*r_switch, 3*r_switch**2],
+        [0, 0, 2, 6*r_switch]
+    ])
+switch_parameter = np.dot(np.linalg.inv(A),np.array([1,0,1,1]))
