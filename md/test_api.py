@@ -84,6 +84,7 @@ def naive_neighborlist(R, box_length, r_cutoff):
                 if i>j:
                     naiveneighbors[i].append(j)
                     naiveneighbors[j].append(i)
+
     return naiveneighbors
 
 
