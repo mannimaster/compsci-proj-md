@@ -19,14 +19,15 @@ import numpy as np
 
 from .api import md
 from particle_interaction import coulomb
-import Initial_Parameters as ip
+from particle_interaction import lennard_jones
+from neighbourlist import neighbourlist 
+import Initial_Test_Parameters as ip
 from md import System
 
-Symbols = ip.Symbols
-Coefficients = ip.Coefficients
-Charges = ip.Charges
-N = ip.N*np.sum(Coefficients)
-std = ip.std
+Symbols = ["Na" , "Cl"]
+Coefficients = [1, 1]
+Charges = [+1.0, -1.0]
+N = 1*np.sum(Coefficients)
 #k_cut = ip.k_cut
 #k_max = ip.k_max_long_range
 n_boxes_short_range = ip.n_boxes_short_range
@@ -35,16 +36,17 @@ r_cut_LJ = ip.r_cut_LJ
 r_switch = r_cut_LJ*0.9
 Sys= System(Symbols, Coefficients, Charges, N/2)
 Sigma, Epsilon = Sys.get_LJ_parameter()
-switch_parameter = np.array([0,0,0,0])
-
-Test_Positions = np.array([[1,0,0],
-                           [3,0,0]])
+p_error = ip.p
+switch_parameter = ip.switch_parameter
+Test_Positions = np.array([[1,1,1],
+                           [2,2,2]])
 Test_R = np.linalg.norm(Test_Positions)
-Test_L = np.array([5,5,5])
+Test_L = ip.L
 Test_Labels = np.array([[1,+1.0,0],
                         [1,-1.0,1]])
-
-    
+neighbours = neighbourlist().compute_neighbourlist(Test_Positions, Test_L[0], r_cut_LJ)[0]
+  
+  
 def test_get_dircetions():
     from boxvectors import directions
     #Create Test Array
@@ -62,7 +64,27 @@ def test_get_dircetions():
     assert np.size(np.unique(K_test)) == base**3, "get_dircetions is broken"
     return "Passed"
 
-
+def test_coulomb_forces():
+    c = coulomb(n_boxes_short_range,
+                Test_L,
+                p_error)
+    c.compute_optimal_cutoff(Test_Positions, Test_Labels, Test_L, p_error)
+    Force = c.compute_forces(Test_Positions,
+                             Test_Labels,
+                             Test_L)
+    assert np.all(Force[0,0] == -Force[1,0]), "coulomb force is broken"
+    
+def test_LJ_forces():
+    LJ = lennard_jones()
+    Force = LJ.compute_forces(Test_Positions,
+                              Sigma,
+                              Epsilon,
+                              Test_Labels,
+                              Test_L,
+                              switch_parameter,
+                              r_switch,
+                              neighbours)
+    assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
 
 def test_neighborlist():
     N = 100
@@ -105,9 +127,8 @@ def test_neighborlist():
 
 def test_SymmetriesPotC():
     #tests coulomb potential function with equidistant charges where the middle one has twice the negativ charge
-    from particle_interaction import coulomb
-
-    potential        = coulomb(ip.std, ip.n_boxes_short_range,ip.L, ip.k_max_long_range, ip.k_cut)
+    potential        = coulomb(ip.n_boxes_short_range,ip.L, ip.p)
+    potential.compute_optimal_cutoff(Positions=ip.positions, Labels=ip.labels, L=ip.L, p_error=ip.p)
     result           = potential.compute_potential(positions=ip.positions, labels=ip.labels, neighbours=ip.neighbours, distances=ip.distances)
     assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P3 should be the same."
     assert ( abs(result[0]/result[1])<0.5+10**(-8) ) , "Potential does not have the expected symmetrie. P2 should be P1*2."
@@ -117,7 +138,6 @@ def test_SymmetriesPotC():
 
 def test_SymmetriesPotLJ():
     #tests LJ Potential for  with equidistant identical charges
-    from particle_interaction import lennard_jones
 
     potential = lennard_jones()
     result    = potential.compute_potential(sigma=ip.sigma, epsilon=ip.epsilon, labels=ip.labels, distances=ip.distances, neighbours=ip.neighbours)
@@ -128,7 +148,6 @@ def test_SymmetriesPotLJ():
 
 
 def test_SymmetriesPotLJ2():
-    from particle_interaction import lennard_jones
 
     potential = lennard_jones()
     result    = potential.compute_potential(sigma=ip.sigma, epsilon=ip.epsilon, labels=ip.labels, distances={0: [np.sqrt(12), np.sqrt(3)], 1: [np.sqrt(12), np.sqrt(12)], 2: [np.sqrt(3), np.sqrt(12)]}, neighbours=ip.neighbours)
@@ -138,25 +157,4 @@ def test_SymmetriesPotLJ2():
     return
 
     
-def test_coulomb_forces():
-    c = coulomb(std,
-                n_boxes_short_range,
-                Test_L,
-                k_max,
-                k_cut)
-    Force = c.compute_forces(Test_Positions,
-                             Test_Labels,
-                             Test_L)
-    assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
-    
-def test_LJ_range_forces():
-    LJ = lennard_jones()
-    Force = LJ.compute_forces(Test_Positions,
-                              Sigma,
-                              Epsilon,
-                              Test_Labels,
-                              Test_L,
-                              switch_parameter,
-                              r_switch,
-                              r_cut_LJ)
-    assert np.all(Force[0,:] == -Force[1,:]), "lennard Jones force is broken"
+

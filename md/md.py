@@ -163,10 +163,8 @@ class md(object):
                  Temperature,
                  Sigma_LJ,
                  Epsilon_LJ, 
-                 switch_parameter, 
                  r_switch,
                  r_cut_LJ,
-                 std,
                  n_boxes_short_range,
                  dt,
                  p_rea,
@@ -188,15 +186,15 @@ class md(object):
         
         self.dt = dt
         self.p_rea = p_rea
-        
-        self.std =  std
-        self.r_switch = r_switch
-        self.k_cut = 2 * p_error * 2 / (float)(box[0])
         self.n_boxes_short_range= n_boxes_short_range
-        self.coulomb = coulomb(self.std, n_boxes_short_range, box, self.k_cut)
-        self.r_cut_coulomb, self.k_cut = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
-        self.switch_parameter = self.__get_switch_parameter()
         
+        # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
+        self.coulomb = coulomb(n_boxes_short_range, box, p_error,epsilon0=0.000239704)
+        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
+
+        self.r_switch = r_switch
+        self.switch_parameter = self.__get_switch_parameter()
+
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
         self.N = np.size(self.positions[:,0])
@@ -511,14 +509,15 @@ class md(object):
                 counter_Frame = 0
 
             sys.stdout.write("\r")
-            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps \\completed"]))
+            sys.stdout.write( ''.join([str(float(i+1)/N_steps*100), "% of steps completed"]))
             sys.stdout.flush()
 
         # save Energy       
         np.savetxt(Energy_file, Energy)
         # save Temperature         
         np.savetxt(Temperature_file, Temperature)
-        return "Simulation Completed"
+        print("Simulation Completed")
+        return
 
     
     
@@ -561,7 +560,7 @@ class md(object):
         
         traj_file = ''.join([path,"\\traj_minimization.xyz"])
         Energy_file = ''.join([path,"\\Energies_minimization"])
-        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+        string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
         myfile = open(traj_file,'w')
@@ -578,7 +577,8 @@ class md(object):
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+        myfile.close()
+        myfile = open(traj_file,'a')
         myfile.write(string1)
         myfile.close()
 
@@ -591,7 +591,7 @@ class md(object):
         for i in np.arange(N_steps):
         
             #Update Positions
-            Positions_new = dynamics().steepest_descent(self.positions, self.labels, self.forces,self.L, constant)
+            Positions_new = dynamics().steepest_descent(self.positions,self.forces,self.L, constant)
 
             #Update Self
             self.positions = Positions_new
@@ -620,7 +620,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
 
@@ -647,15 +648,18 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
                 
                 # save Energy       
                 np.savetxt(Energy_file, Energy)
-                return "Energy Converged"
+                print("Energy Converged")
+                return 
             
             
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        return "Maximum Number of Steps reached"
+        print("Maximum Number of Steps reached")
+        return
