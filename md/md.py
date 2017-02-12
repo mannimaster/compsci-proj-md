@@ -516,7 +516,7 @@ class md(object):
         np.savetxt(Energy_file, Energy)
         # save Temperature         
         np.savetxt(Temperature_file, Temperature)
-        print "Simulation Completed"
+        print("Simulation Completed")
         return
 
     
@@ -652,11 +652,11 @@ class md(object):
                 
                 # save Energy       
                 np.savetxt(Energy_file, Energy)
-                print "Energy Converged"
+                print("Energy Converged")
                 return 
             
             
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        print "Maximum Number of Steps reached"
+        print("Maximum Number of Steps reached")
         return
