@@ -96,9 +96,8 @@ def test_neighborlist():
     n1 = naiveneighbors
     n_inst = nbl()
     n2, dist2 = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
-    import _ext.fast_neighbourlist as fnbl
-    n_inst = fnbl()
-    n3, dist3 = n_inst.fast_neighbourlist(R, box_length, r_cutoff)
+    from _ext.fast_neighbourlist import fast_neighbourlist as fnbl
+    n3, dist3 = fnbl(R, box_length, r_cutoff)
     for i in range(N):
       n1[i].sort()
       n2[i].sort()
