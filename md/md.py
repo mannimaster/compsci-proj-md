@@ -251,11 +251,13 @@ class md(object):
     
     def __get_switch_parameter(self):
         A = np.array([ 
-            [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
-            [1, self.r_cut_LJ, self.r_cut_LJ**2, self.r_cut_LJ**3],
-            [0, 1, 2*self.r_switch, 3*self.r_switch**2], 
-            [0, 0, 2, 6*self.r_switch]])
-        switch_parameter = np.dot(np.linalg.inv(A), np.array([1,0,1,1]))
+            [1, self.r_switch, self.r_switch**2, self.r_switch**3, self.r_switch**4, self.r_switch**5], 
+            [1, self.r_cut_LJ, self.r_cut_LJ**2, self.r_cut_LJ**3, self.r_cut_LJ**4, self.r_cut_LJ**5],
+            [0, 1, 2*self.r_switch, 3*self.r_switch**2, 4*self.r_switch**3, 5*self.r_switch**4], 
+            [0, 1, 2*self.r_cut_LJ, 3*self.r_cut_LJ**2, 4*self.r_cut_LJ**3, 5*self.r_cut_LJ**4],
+            [0, 0, 2, 6*self.r_switch, 12*self.r_switch**2, 20*self.r_switch**3],
+            [0, 0, 2, 6*self.r_cut_LJ, 12*self.r_cut_LJ**2, 20*self.r_cut_LJ**3]])
+        switch_parameter = np.dot(np.linalg.inv(A), np.array([1,0,0,0,0,0]))
         return switch_parameter
 
     
@@ -531,7 +533,7 @@ class md(object):
         print("Simulation Completed")
         return
     
-    def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, constant, path):
+    def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, max_displacement, path):
         """Minimizes the Energy by steepest descent
 
         Parameters
@@ -548,8 +550,8 @@ class md(object):
         Frame_save: int
             The intervall at which frames are created and saved. 
             
-        constant: float
-            The constant, the forces are multiplied with, to update the positions
+        max_displacement: float
+            Fraction of the boxlenth that particles will move with one Simulation step.
 
         Path: string
             Location where results will be saved.
@@ -598,6 +600,9 @@ class md(object):
         E_index = -1
         
         for i in np.arange(N_steps):
+            
+            
+            constant = max_displacement/np.max(np.abs(self.forces))*self.L[0]
         
             #Update Positions
             Positions_new = dynamics().steepest_descent(self.positions,self.forces,self.L, constant)

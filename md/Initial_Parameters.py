@@ -59,7 +59,7 @@ r_switch = r_cut_LJ*0.9
 ############################### DO NOT CHANGE THESE LINES !!! ###############################
 #############################################################################################
 
-assert tau>timestep, "tau must be larger than dt"
+assert tau>timestep, "tau must be larger than timestep"
 assert r_switch < r_cut_LJ, "switch radius must be smaller than LJ cutoff Radius"
 
 # Summarizing Dimension in one array
