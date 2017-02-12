@@ -21,7 +21,7 @@ L_z=2.256e-09
 
 #LJ Cutoff Radius
 r_cut_LJ = 0.4*L_x
-asser r_cut_LJ < L_x/2 "LJ cutoff radius must be smaller than half a box length"
+assert r_cut_LJ < L_x/2, "LJ cutoff radius must be smaller than half a box length"
 
 #Short-Range Potential Cutoff Radius
 r_cut_coulomb = 2*L_x
