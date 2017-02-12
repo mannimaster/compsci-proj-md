@@ -492,7 +492,6 @@ class  coulomb(__particle_interaction):
 class lennard_jones(__particle_interaction):
 
     def __init__(self):
-        self.constant = 1 / (8 * np.pi * epsilon_0)  #prefactor for the short range potential/forces
         return
 
 
@@ -534,7 +533,6 @@ class lennard_jones(__particle_interaction):
                 #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
                 sigmaPoSix = (sigma[int(labels[i,2]+labels[j,2])]/absDistance)**6                                       #precalulating the sixth power
                 shortPotentialL[i] += 4*epsilon[int(labels[i,2]+labels[j,2])]*(sigmaPoSix**2-sigmaPoSix)                #calculating and summing the Lennard Jones potential
-        shortPotentialL *= self.constant
         return shortPotentialL
 
     def compute_energy(self, sigma, epsilon, labels, neighbours, distances):
@@ -566,7 +564,7 @@ class lennard_jones(__particle_interaction):
         '''
         energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances)
 
-        return np.sum(np.multiply(energy_LJ,labels[:,0]))
+        return np.sum(energy_LJ)
     
     
 
