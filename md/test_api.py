@@ -93,14 +93,19 @@ def test_neighborlist():
 
    
     from neighbourlist import neighbourlist as nbl
-    n2 = naiveneighbors
+    n1 = naiveneighbors
     n_inst = nbl()
-    n1, dist = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
+    n2, dist2 = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
+    import _ext.fast_neighbourlist as fnbl
+    n_inst = fnbl()
+    n3, dist3 = n_inst.fast_neighbourlist(R, box_length, r_cutoff)
     for i in range(N):
       n1[i].sort()
       n2[i].sort()
+      n3[i].sort()
 
     assert n1 == n2
+    assert n1 == n3
 
     """
     def test_coulomb_forces():

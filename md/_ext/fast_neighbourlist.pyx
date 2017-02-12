@@ -32,10 +32,9 @@ def fast_neighbourlist(
         int i
         int j
         int k
-        int N = R.shape[0]
     
     dist = _fast_neighbourlist(
-        <double*> np.PyArray_DATA(R), N, box_length, r_cutoff)
+        <double*> np.PyArray_DATA(R), R.shape[0], box_length, r_cutoff)
 
     neighbors = {}
     distances = {}
