@@ -128,7 +128,7 @@ def test_neighborlist():
 def test_SymmetriesPotC():
     #tests coulomb potential function with equidistant charges where the middle one has twice the negativ charge
     potential        = coulomb(ip.n_boxes_short_range,ip.L, ip.p)
-    potential.compute_optimal_cutoff(positions=ip.positions, labels=ip.labels, ip.L, ip.p)
+    potential.compute_optimal_cutoff(Positions=ip.positions, Labels=ip.labels, L=ip.L, p_error=ip.p)
     result           = potential.compute_potential(positions=ip.positions, labels=ip.labels, neighbours=ip.neighbours, distances=ip.distances)
     assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P3 should be the same."
     assert ( abs(result[0]/result[1])<0.5+10**(-8) ) , "Potential does not have the expected symmetrie. P2 should be P1*2."
