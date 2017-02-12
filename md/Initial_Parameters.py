@@ -24,13 +24,13 @@ Charges = np.array([1.0 ,-1.0])
 # Number of Particles
 N = 32
 
-# Boxsize in Angström
+# Boxsize in Angstroem
 L_x=22.56
 L_y=22.56
 L_z=22.56
 
 
-# LJ Cutoff Radius in Angström
+# LJ Cutoff Radius in Angstroem
 r_cut_LJ = 0.4*L_x
 assert r_cut_LJ < L_x/2, "LJ cutoff radius must be smaller than half a box length"
 
@@ -48,7 +48,7 @@ timestep = 0.1e-15
 # must be larger than dt
 tau = 100
 
-#Switch Radius in Angström
+#Switch Radius in Angstroem
 r_switch = r_cut_LJ*0.9
 
 #############################################################################################
@@ -59,14 +59,14 @@ r_switch = r_cut_LJ*0.9
 ############################### DO NOT CHANGE THESE LINES !!! ###############################
 #############################################################################################
 
-assert tau>dt, "tau must be larger than dt"
+assert tau>timestep, "tau must be larger than dt"
 assert r_switch < r_cut_LJ, "switch radius must be smaller than LJ cutoff Radius"
 
 # Summarizing Dimension in one array
 L = np.array([L_x, L_y, L_z])
 
 #Reassignment Probability
-p_rea = dt/tau
+p_rea = timestep/tau
 
 ##number of Boxes to consider for short ranged Potential
 n_boxes_short_range = ( np.ceil((L_x / (float)(2))/np.max(L)) ).astype(int)
