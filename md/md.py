@@ -436,7 +436,7 @@ class md(object):
         traj_file = ''.join([path,"\\traj.xyz"])
         Energy_file = ''.join([path,"\\Energies"])
         Temperature_file = ''.join([path,"\\Temperature"])
-        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+        string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
         myfile = open(traj_file,'w')
@@ -453,7 +453,8 @@ class md(object):
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+        myfile.close()
+        myfile = open(traj_file,'a')
         myfile.write(string1)
         myfile.close()
 
@@ -502,7 +503,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
 
@@ -560,7 +562,7 @@ class md(object):
         
         traj_file = ''.join([path,"\\traj_minimization.xyz"])
         Energy_file = ''.join([path,"\\Energies_minimization"])
-        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+        string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
         myfile = open(traj_file,'w')
@@ -577,7 +579,8 @@ class md(object):
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+        myfile.close()
+        myfile = open(traj_file,'a')
         myfile.write(string1)
         myfile.close()
 
@@ -619,7 +622,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
 
@@ -646,7 +650,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
                 
