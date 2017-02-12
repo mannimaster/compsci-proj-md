@@ -193,8 +193,8 @@ class md(object):
         self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
         self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
         self.r_switch = r_switch
-        self.switch_parameter = self.__get_switch_parameter()
         self.r_cut_LJ = r_cut_LJ
+        self.switch_parameter = self.__get_switch_parameter()
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
         self.N = np.size(self.positions[:,0])
