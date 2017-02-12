@@ -29,9 +29,15 @@ L_x=22.56
 L_y=22.56
 L_z=22.56
 L = np.array([L_x, L_y, L_z])
+#Boxsize
+#L_x=2.256e-09
+#L_y=2.256e-09
+#L_z=2.256e-09
+
 
 # LJ Cutoff Radius in Angström
 r_cut_LJ = 0.4*L_x
+assert r_cut_LJ < L_x/2, "LJ cutoff radius must be smaller than half a box length"
 
 # Accuracy Factor
 # the cutoff-error is given by exp(-p)
@@ -66,9 +72,6 @@ L = np.array([L_x, L_y, L_z])
 
 #Reassignment Probability
 p_rea = dt/tau
-
-#number of Boxes to consider for LJ-Potential
-n_boxes_LJ = np.ceil(r_cut_LJ/np.max(L)).astype(int) 
 
 ##number of Boxes to consider for short ranged Potential
 n_boxes_short_range = ( np.ceil((L_x / (float)(2))/np.max(L)) ).astype(int)

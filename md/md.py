@@ -87,6 +87,7 @@ class System(object):
             for j in index:
                 l2_j = np.log2(j+1).astype(int)
                 Epsilon[i+j] = np.sqrt(PSE[self.Symbols[l2_i]][3].astype(float)*PSE[self.Symbols[l2_j]][3].astype(float))
+        Epsilon *= (4184/6.022e23) #Convert Unit kcal/mol --> J
         return Sigma, Epsilon
     
     
@@ -193,8 +194,8 @@ class md(object):
         self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
         self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
         self.r_switch = r_switch
-        self.switch_parameter = self.__get_switch_parameter()
         self.r_cut_LJ = r_cut_LJ
+        self.switch_parameter = self.__get_switch_parameter()
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
         self.N = np.size(self.positions[:,0])
@@ -249,7 +250,7 @@ class md(object):
     def __get_switch_parameter(self):
         A = np.array([ 
             [1, self.r_switch, self.r_switch**2, self.r_switch**3], 
-            [1, self.r_cut_coulomb, self.r_cut_coulomb**2, self.r_cut_coulomb**3],
+            [1, self.r_cut_LJ, self.r_cut_LJ**2, self.r_cut_LJ**3],
             [0, 1, 2*self.r_switch, 3*self.r_switch**2], 
             [0, 0, 2, 6*self.r_switch]])
         switch_parameter = np.dot(np.linalg.inv(A), np.array([1,0,1,1]))
@@ -436,7 +437,7 @@ class md(object):
         traj_file = ''.join([path,"\\traj.xyz"])
         Energy_file = ''.join([path,"\\Energies"])
         Temperature_file = ''.join([path,"\\Temperature"])
-        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+        string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
         myfile = open(traj_file,'w')
@@ -453,7 +454,8 @@ class md(object):
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+        myfile.close()
+        myfile = open(traj_file,'a')
         myfile.write(string1)
         myfile.close()
 
@@ -502,7 +504,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
 
@@ -516,7 +519,8 @@ class md(object):
         np.savetxt(Energy_file, Energy)
         # save Temperature         
         np.savetxt(Temperature_file, Temperature)
-        print ("Simulation Completed")
+
+        print("Simulation Completed")
         return
     
     def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, constant, path):
@@ -554,7 +558,7 @@ class md(object):
         
         traj_file = ''.join([path,"\\traj_minimization.xyz"])
         Energy_file = ''.join([path,"\\Energies_minimization"])
-        string1 = ''.join([str(self.N).format(bin), b"\n", b"\n"])
+        string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
         myfile = open(traj_file,'w')
@@ -571,7 +575,8 @@ class md(object):
 
         myfile = open(traj_file,'ab')
         np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+        myfile.close()
+        myfile = open(traj_file,'a')
         myfile.write(string1)
         myfile.close()
 
@@ -613,7 +618,8 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
 
@@ -640,17 +646,20 @@ class md(object):
                 #save frame
                 myfile = open(traj_file,'ab')
                 np.savetxt(myfile,frame, fmt = "%s %f8 %f8 %f8", )
-
+                myfile.close()
+                myfile = open(traj_file,'a')
                 myfile.write(string1)
                 myfile.close()
                 
                 # save Energy       
                 np.savetxt(Energy_file, Energy)
-                print ("Energy Converged")
+
+                print("Energy Converged")
                 return 
             
             
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        print ("Maximum Number of Steps reached")
+
+        print("Maximum Number of Steps reached")
         return
