@@ -19,6 +19,7 @@ requirements:
     - numpy x.x
     - scipy
     - matplotlib
+    - cython
 
 test:
   requires:

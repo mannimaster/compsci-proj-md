@@ -106,4 +106,4 @@ setup(
     packages=['md', 'md._ext'],
     setup_requires=['numpy>=1.7.0', 'cython>=0.22', 'setuptools>=0.6'],
     install_requires=['numpy>=1.7.0'],
-    tests_require=['pytest', 'cython>=0.22'])
+    tests_require=['pytest'])
