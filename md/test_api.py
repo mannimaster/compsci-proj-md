@@ -63,13 +63,7 @@ def test_get_dircetions():
     return "Passed"
 
 
-
-def test_neighborlist():
-    N = 100
-    R=np.random.rand(N,3)
-    box_length=1.0
-    r_cutoff=0.11
-   
+def naive_neighborlist(R, box_length, r_cutoff):
     naiveneighbors = {}
     dx = np.empty(3)
     for i in range(N):
@@ -90,12 +84,33 @@ def test_neighborlist():
                 if i>j:
                     naiveneighbors[i].append(j)
                     naiveneighbors[j].append(i)
+    return naiveneighbors
 
-   
+
+def test_neighborlist():
+    N = 100
+    R=np.random.rand(N,3)
+    box_length=1.0
+    r_cutoff=0.11
+
+    n1 = naiveneighbors(R,box_length,r_cutoff)
+
     from neighbourlist import neighbourlist as nbl
-    n1 = naiveneighbors
     n_inst = nbl()
     n2, dist2 = n_inst.compute_neighbourlist(R, box_length, r_cutoff)
+    for i in range(N):
+      n1[i].sort()
+      n2[i].sort()
+
+    assert n1 == n2
+
+
+def test_fast_neighborlist():
+    N = 100
+    R=np.random.rand(N,3)
+    box_length=1.0
+    r_cutoff=0.11
+    n1 = naiveneighbors(R,box_length,r_cutoff)
     import cython
     import pyximport
     pyximport.install()
@@ -103,10 +118,8 @@ def test_neighborlist():
     n3, dist3 = fnbl(R, box_length, r_cutoff)
     for i in range(N):
       n1[i].sort()
-      n2[i].sort()
       n3[i].sort()
 
-    assert n1 == n2
     assert n1 == n3
 
     """
