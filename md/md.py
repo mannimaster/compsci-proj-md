@@ -316,7 +316,7 @@ class md(object):
                                        neighbours = self.neighbours_coulomb,
                                        distances = self.distances_coulomb,
                                        r_s=self.r_switch,
-                                       r_c=self.r_cut_coulomb))
+                                       r_c=self.r_cut_coulomb,))
         
         return Potential
     

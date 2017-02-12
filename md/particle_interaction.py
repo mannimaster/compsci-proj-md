@@ -623,7 +623,7 @@ class lennard_jones(__particle_interaction):
         total energy : float
             float value of the total Lennard-Jones energy
         '''
-        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances, r_s=r_s, r_c=r_c)
+        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances, r_s=r_s, r_c=r_c,)
 
         return np.sum(energy_LJ)
     
