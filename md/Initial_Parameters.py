@@ -67,7 +67,7 @@ Frame_save=1
 Temperature_save=1
 
 #max displacement in the minimazation step
-max_displacement = 0.1
+max_displacement = 0.05
 
 
 #############################################################################################

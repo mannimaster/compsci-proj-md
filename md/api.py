@@ -69,9 +69,6 @@ def api(N_steps, threshold, Energy_save, Frame_save,Temperature_save):
     R = np.linalg.norm(Positions, axis=1)
 
 
-    L *= 1.5
-
-
     MD = md(
         Positions,
         Labels,
@@ -89,20 +86,12 @@ def api(N_steps, threshold, Energy_save, Frame_save,Temperature_save):
         p_error,
         Symbols)
 
-
-    start = time.time()
+    MD.forces = MD.get_forces()
     MD.minmimize_Energy(N_steps=N_steps, threshold=threshold, Energy_save=Energy_save, Frame_save=Frame_save, path=cwd,
                         max_displacement=max_displacement)
-    ende = time.time()
-    print("\n")
-    print(ende - start)
 
-
-    start = time.time()
     MD.get_traj(N_steps, Energy_save, Temperature_save, Frame_save, path=cwd)
-    ende = time.time()
-    print("\n")
-    print(ende - start)
+
 
 
     return
@@ -112,21 +101,9 @@ flaggs = np.zeros(6)
 if len(sys.argv)==1:
     import Initial_Parameters as ip
 
-    for i in range(6):
-        if flaggs[0] == 0:
-            vN_steps = ip.N_steps
-        if flaggs[1] == 0:
-            vthreshold = ip.threshold
-        if flaggs[2] == 0:
-            vEnergy_save = ip.Energy_save
-        if flaggs[3] == 0:
-            vFrame_save = ip.Frame_save
-        if flaggs[4] == 0:
-            vTemperature_save = ip.Temperature_save
-
     # Starting api function
-    api(N_steps=vN_steps, threshold=vthreshold, Energy_save=vEnergy_save, Frame_save=vFrame_save,
-        Temperature_save=vTemperature_save)
+    api(N_steps=ip.N_steps, threshold=ip.threshold, Energy_save=ip.Energy_save, Frame_save=ip.Frame_save,
+        Temperature_save=ip.Temperature_save)
 
 elif len(sys.argv)>=2:
 
