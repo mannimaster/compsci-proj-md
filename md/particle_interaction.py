@@ -150,8 +150,8 @@ class  coulomb(__particle_interaction):
             value between 1 and 0
         """
         rStar = (x - r_0) / (r_c - r_0)
-        rStarSquare = rStar ** 2
-        return 2 * rStar * rStarSquare - 3 * rStarSquare + 1
+        rStarSquareSquare = rStarSquare**2
+        return -6 * rStar * rStarSquareSquare + 15 * rStarSquareSquare - 10*rStarSquareSquare*rStarSquare + 1
 
 
     def __short_range_potential(self, labels, neighbours, distances, r_s, r_c):#distances should have the same format/order as the neighborlist
@@ -550,8 +550,8 @@ class lennard_jones(__particle_interaction):
             value between 1 and 0
         """
         rStar       = (x-r_0)/(r_c-r_0)
-        rStarSquare = rStar**2
-        return 2*rStar*rStarSquare - 3*rStarSquare + 1
+        rStarSquareSquare = rStarSquare**2
+        return -6 * rStar * rStarSquareSquare + 15 * rStarSquareSquare - 10*rStarSquareSquare*rStarSquare + 1
 
     def compute_potential(self, sigma, epsilon, labels, neighbours, distances, r_s, r_c):
         """
