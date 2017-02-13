@@ -20,11 +20,11 @@ cimport numpy as np
 
 
 cdef extern from 'src_fast_neighbourlist.h':
-  double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff)
+  double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
 
 
 def fast_neighbourlist(
-    np.ndarray[double, ndim=2, mode='c'] R not None,
+    np.ndarray[np.double_t, ndim=2, mode='c'] R not None,
     double box_length, double r_cutoff):
 
     cdef:

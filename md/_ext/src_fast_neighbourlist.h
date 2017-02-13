@@ -19,6 +19,6 @@
 #ifndef MD
 #define MD
 
-double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff);
+double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff);
 
 #endif

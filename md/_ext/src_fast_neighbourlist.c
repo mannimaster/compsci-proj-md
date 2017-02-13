@@ -16,7 +16,7 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff)
+double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
 {
     // assume same size in all N dimension
     int n_cells = (int) box_length / r_cutoff;
