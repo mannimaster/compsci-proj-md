@@ -46,9 +46,9 @@ Test_Labels = np.array([[1,+1.0,0],
                         [1,-1.0,1]])
 
 Test_d_Pos = np.zeros((N,N,3))
-Test_d_Pos[:,:,0] = np.subtract.outer(Test_positions[:,0], Test_positions[:,0])
-Test_d_Pos[:,:,1] = np.subtract.outer(Test_positions[:,1], Test_positions[:,1])
-Test_d_Pos[:,:,2] = np.subtract.outer(Test_positions[:,2], Test_positions[:,2])
+Test_d_Pos[:,:,0] = np.subtract.outer(Test_Positions[:,0], Test_Positions[:,0])
+Test_d_Pos[:,:,1] = np.subtract.outer(Test_Positions[:,1], Test_Positions[:,1])
+Test_d_Pos[:,:,2] = np.subtract.outer(Test_Positions[:,2], Test_Positions[:,2])
 
 neighbours = neighbourlist().compute_neighbourlist(Test_Positions, Test_L[0], r_cut_LJ)[0]
   
