@@ -86,3 +86,7 @@ A= np.array([
         [0, 0, 2, 6*r_switch]
     ])
 switch_parameter = np.dot(np.linalg.inv(A),np.array([1,0,1,1]))
+d_Pos = np.zeros((3,3,3))
+d_Pos[:,:,0] = np.subtract.outer(positions[:,0],positions[:,0])
+d_Pos[:,:,1] = np.subtract.outer(positions[:,1], positions[:,1])
+d_Pos[:,:,2] = np.subtract.outer(positions[:,2], positions[:,2])
