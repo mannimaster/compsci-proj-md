@@ -685,3 +685,46 @@ class md(object):
 
         print("Maximum Number of Steps reached")
         return
+
+    def radial_distribution(self, distancematrix, dr, rmax, numb_of_probes, rho0):
+
+        """Computes the radial distribution
+
+        rdf(R) = { H(R) / [num * V(R)] } / rho0
+        for more information see:
+        https://de.wikipedia.org/wiki/Radiale_Verteilungsfunktion
+
+        Parameters
+        ----------------
+        distancematrix: numpy.array
+            Array with the distance of each particle of type A to each particle of type B
+
+        dr: float
+            thickness of spherical shell
+
+        rmax: float
+            maximum radius that will be considered
+
+        numb_of_probes: int
+            number of particles of type A, that are considered within the distancematrix
+
+        rho0: float
+            ideal gas density (= number of particles / box volume)
+        Returns
+        -----------------
+
+        histlist: 1 x m numpy.array
+            vector containing the radial distribution
+        """
+
+        histlist=np.zeros(int(np.ceil(rmax/dr)))
+        volume_factor = 4 * np.pi / 3
+
+        for iteration in range (0,len(histlist)):
+            histlist[iteration] = len(distancematrix[distancematrix < iteration*dr + dr])-len(distancematrix[distancematrix <= iteration*dr])
+            binvolume = volume_factor * ((iteration * dr + dr) ** 3 - (iteration * dr) ** 3)
+            histlist[iteration] /= binvolume
+
+        histlist /= (numb_of_probes * rho0)
+
+        return histlist
