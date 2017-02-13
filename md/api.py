@@ -109,7 +109,24 @@ def api(N_steps, threshold, Energy_save, Frame_save,Temperature_save):
 
 flaggs = np.zeros(6)
 if len(sys.argv)==1:
-    api()
+    import Initial_Parameters as ip
+
+    for i in range(6):
+        if flaggs[0] == 0:
+            vN_steps = ip.N_steps
+        if flaggs[1] == 0:
+            vthreshold = ip.threshold
+        if flaggs[2] == 0:
+            vEnergy_save = ip.Energy_save
+        if flaggs[3] == 0:
+            vFrame_save = ip.Frame_save
+        if flaggs[4] == 0:
+            vTemperature_save = ip.Temperature_save
+
+    # Starting api function
+    api(N_steps=vN_steps, threshold=vthreshold, Energy_save=vEnergy_save, Frame_save=vFrame_save,
+        Temperature_save=vTemperature_save)
+
 elif len(sys.argv)>=2:
 
     #Help command
