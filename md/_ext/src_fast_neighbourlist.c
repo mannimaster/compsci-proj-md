@@ -32,7 +32,7 @@ double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
     // Loop over all particles to construct header (head) and linked lists (cllist)
     for (int i=0; i<N; i++) {
         /* Vector cell index to which this atom belongs */
-        for (int dim=0; dim<3; dim++) x[dim] = R[i][dim]/r_c;
+        for (int dim=0; dim<3; dim++) x[dim] = R[i*3+dim]/r_c;
         int cell_index = x[0]*n_cells*n_cells+x[1]*n_cells+x[2];
         // Link to the previous occupant (or EMPTY if it's the 1st)
         cllist[i] = head[cell_index];
@@ -76,7 +76,7 @@ double _fast_neighbourlist(double *R, int N, double box_length, double r_cutoff)
                         if (i<j)  {
                           double rij=0.0;
                           // Image corrected relative pair position
-                          for (int dim=0; dim<3; dim++) rij += R[i][dim]-(R[j][dim]+rshift[dim]);
+                          for (int dim=0; dim<3; dim++) rij += R[i*3+dim]-(R[j*3+dim]+rshift[dim]);
                           if (rij<=r_cutoff) {
                             dist[i][j]=rij;
                             dist[j][i]=rij;
