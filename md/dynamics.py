@@ -26,6 +26,7 @@ class dynamics(object):
                                    p_rea,
                                    coulomb,
                                    lennard_jones,
+                                   d_Pos,
                                    thermostat):
         ''' The Verlocity Verlet Integrator
         Parameters:
@@ -55,7 +56,7 @@ class dynamics(object):
         
         
         Forces_new = coulomb.compute_forces(
-            Positions_new, 
+            Positions_new, d_Pos,
             Labels,
             L)+lennard_jones.compute_forces(
             Positions_new,
