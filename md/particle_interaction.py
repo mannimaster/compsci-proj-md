@@ -53,7 +53,7 @@ class  coulomb(__particle_interaction):
 
         self.std = np.sqrt(2 * p_error) / (float)(k_cut)
         self.n_boxes_short_range = n_boxes_short_range
-        self.constant = 1 / (8 * np.pi * epsilon_0)        # prefactor for the short range potential/forces
+        self.constant = 1 / (8 * np.pi * self.epsilon0)        # prefactor for the short range potential/forces
         self.volume = L[0] ** 3                            # Volume of box
         self.k_list = self.__create_k_list(k_cut,L[0])
         return
@@ -307,7 +307,7 @@ class  coulomb(__particle_interaction):
         # ]
 
         return_vector = np.dot(np.exp(1j*np.transpose(matrix)), vector)
-        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * epsilon_0))
+        return_vector = np.multiply(return_vector, 1 / (float)(self.volume * self.epsilon0))
 
         return return_vector.real
 
@@ -462,7 +462,7 @@ class  coulomb(__particle_interaction):
                 + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*epsilon_0)
+        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*self.epsilon0)
         return Force_short_range
 
 
@@ -518,7 +518,7 @@ class  coulomb(__particle_interaction):
             Force_long_range[h,:] = sum(f_1)   
         
         # get prefactor right                                      
-        Force_long_range *= charges/(self.volume*epsilon_0)*2      # multiply by 2 because of symmetry properties of sine
+        Force_long_range *= charges/(self.volume*self.epsilon0)*2      # multiply by 2 because of symmetry properties of sine
         return Force_long_range
 
 
