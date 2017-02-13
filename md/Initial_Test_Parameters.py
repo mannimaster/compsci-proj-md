@@ -12,10 +12,10 @@ L_z=3.
 L = np.array([L_x, L_y, L_z])
 
 #LJ Cutoff Radius
-r_cut_LJ = 1.0
+r_cut_LJ = 1.4
 
 #Short-Range Potential Cutoff Radius
-r_cut_coulomb = 1.5
+r_cut_coulomb = 1.4
 
 #Accuracy Factor, the cutofferror is given by exp(-p)
 p = 10.0
@@ -38,8 +38,6 @@ positions = np.array(([1., 1., 1.], [2., 2., 2.], [3., 3., 3.]))
 sigma     = np.array([1.,1.,1.])
 epsilon   = np.array([1.,1.,1.])
 
-#switch-parameter for Lennard-Jones-Forces
-switch_parameter = np.array([1,-1,0,0])
 
 #distance where the switch-function kicks in (Lennard-Jones-Forces)
 r_switch = r_cut_LJ*0.8

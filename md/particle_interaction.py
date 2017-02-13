@@ -97,7 +97,7 @@ class  coulomb(__particle_interaction):
 
         return k_list
 
-    def compute_potential(self,labels, positions, neighbours, distances):
+    def compute_potential(self,labels, positions, neighbours, distances, r_s, r_c):
         """
         short range potential
         compute_potential(self,labels,positions, neighbours, distances)
@@ -124,10 +124,38 @@ class  coulomb(__particle_interaction):
         shortPotential : 1D np.array
             ..the short range potential at the position of each particle. The potentials within the array are in the same order as the positions in the positions array.
         """
-        return self.__short_range_potential(labels, neighbours, distances) + self.__long_range_potential(labels[:,1],positions)
+        return self.__short_range_potential(labels, neighbours, distances, r_s, r_c) + self.__long_range_potential(labels[:,1],positions)
 
 
-    def __short_range_potential(self, labels, neighbours, distances):#distances should have the same format/order as the neighborlist
+    def __switchFunction(self, x, r_0, r_c):
+        """
+        switchFunction(self,x,r_0,r_c):
+        Calculates a switch function that is for calculating the Potential.
+
+        x1 = (x-r_0)/(r_c-r_0)
+        return 2x1**2 -3x**2 +1
+
+        Parameters
+        ----------
+        x : scalar
+            absolute distance between two particles
+
+        r_0 : scalar
+            switch radius
+
+        r_c : scalar
+            cutoff radius
+
+        return : scalar
+            value between 1 and 0
+        """
+        rStar = (x - r_0) / (r_c - r_0)
+        rStarSquare = rStar**2
+        rStarSquareSquare = rStarSquare**2
+        return -6 * rStar * rStarSquareSquare + 15 * rStarSquareSquare - 10*rStarSquareSquare*rStarSquare + 1
+
+
+    def __short_range_potential(self, labels, neighbours, distances, r_s, r_c):#distances should have the same format/order as the neighborlist
         """
         short range Coulomb potential
         __short_range_potential(self, positions,  labels, n_particles, neighbours, distances,)
@@ -157,9 +185,15 @@ class  coulomb(__particle_interaction):
         for i in neighbours:
             for j,absDistance in zip(neighbours[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
 
-                shortPotential[i] += labels[j,1]/absDistance*erfc(absDistance/(np.sqrt(2)*self.std))               #calculating and summing the short range coulomb potential
+                if absDistance < r_s:
+                    shortPotential[i] += labels[j, 1] / absDistance * erfc(absDistance / (np.sqrt(2) * self.std))       #calculating and summing the short range coulomb potential
+                else:
+                    shortPotential[i] += self.__switchFunction(absDistance, r_s, r_c) * (labels[j, 1] / absDistance * erfc(absDistance / (np.sqrt(2) * self.std)))
+
         shortPotential *= self.constant
         return shortPotential
+
+
 
     def __long_range_potential(self,charges,positions):
 
@@ -278,7 +312,7 @@ class  coulomb(__particle_interaction):
 
         return return_vector.real
 
-    def compute_energy(self,labels,positions, neighbours, distances):
+    def compute_energy(self,labels,positions, neighbours, distances, r_s, r_c):
 
         ''' Calculate the total coloumb energy
 
@@ -303,9 +337,9 @@ class  coulomb(__particle_interaction):
                     float value of the total coloumb energy
         '''
 
-        return self.__short_range_energy(labels, neighbours, distances) + self.__long_range_energy(labels,positions)
+        return self.__short_range_energy(labels, neighbours, distances, r_s, r_c) + self.__long_range_energy(labels,positions)
 
-    def __short_range_energy(self, labels, neighbours, distances):
+    def __short_range_energy(self, labels, neighbours, distances, r_s, r_c):
         
         ''' Calculate the total short range energy of the system
 
@@ -328,7 +362,7 @@ class  coulomb(__particle_interaction):
         '''
 
         #calculates the short range potential
-        short_range_potential = self.__short_range_potential(labels, neighbours, distances)
+        short_range_potential = self.__short_range_potential(labels, neighbours, distances, r_s, r_c)
 
         return 0.5 * np.sum(np.multiply(short_range_potential,labels[:,1]))
     
@@ -475,8 +509,34 @@ class lennard_jones(__particle_interaction):
     def __init__(self):
         return
 
+    def __switchFunction(self,x,r_0,r_c):
+        """
+        switchFunction(self,x,r_0,r_c):
+        Calculates a switch function that is for calculating the Potential.
 
-    def compute_potential(self, sigma, epsilon, labels, neighbours, distances):
+        x1 = (x-r_0)/(r_c-r_0)
+        return 2x1**2 -3x**2 +1
+
+        Parameters
+        ----------
+        x : scalar
+            absolute distance between two particles
+
+        r_0 : scalar
+            switch radius
+
+        r_c : scalar
+            cutoff radius
+
+        return : scalar
+            value between 1 and 0
+        """
+        rStar       = (x-r_0)/(r_c-r_0)
+        rStarSquare = rStar**2
+        rStarSquareSquare = rStarSquare**2
+        return -6 * rStar * rStarSquareSquare + 15 * rStarSquareSquare - 10*rStarSquareSquare*rStarSquare + 1
+
+    def compute_potential(self, sigma, epsilon, labels, neighbours, distances, r_s, r_c):
         """
         Lennard Jones
         potentialShort(self, sigma, epsilon, labels, neighbours, distances)
@@ -513,10 +573,13 @@ class lennard_jones(__particle_interaction):
             for j,absDistance in zip(neighbours[i],distances[i]):#TIMEPROBLEM http://stackoverflow.com/questions/1663807/how-can-i-iterate-through-two-lists-in-parallel-in-python
                 #print i,j,absDistance,labels[i,2]+labels[j,2]#, (sigma[labels[i,2]+labels[j,2]]/absDistance)**6
                 sigmaPoSix = (sigma[int(labels[i,2]+labels[j,2])]/absDistance)**6                                       #precalulating the sixth power
-                shortPotentialL[i] += 4*epsilon[int(labels[i,2]+labels[j,2])]*(sigmaPoSix**2-sigmaPoSix)                #calculating and summing the Lennard Jones potential
+                if absDistance<r_s:
+                    shortPotentialL[i] += 4*epsilon[int(labels[i,2]+labels[j,2])]*(sigmaPoSix**2-sigmaPoSix)                #calculating and summing the Lennard Jones potential
+                else:
+                    shortPotentialL[i] += self.__switchFunction(absDistance,r_s,r_c)*(4 * epsilon[int(labels[i, 2] + labels[j, 2])] * (sigmaPoSix ** 2 - sigmaPoSix))
         return shortPotentialL
 
-    def compute_energy(self, sigma, epsilon, labels, neighbours, distances):
+    def compute_energy(self, sigma, epsilon, labels, neighbours, distances, r_s, r_c):
         
         ''' Calculate the total Lennard-Jones energy
 
@@ -543,7 +606,7 @@ class lennard_jones(__particle_interaction):
         total energy : float
             float value of the total Lennard-Jones energy
         '''
-        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances)
+        energy_LJ = self.compute_potential(sigma, epsilon, labels, neighbours, distances, r_s=r_s, r_c=r_c,)
 
         return np.sum(energy_LJ)
     
