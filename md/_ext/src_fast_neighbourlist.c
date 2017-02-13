@@ -46,51 +46,55 @@ double _fast_neighbourlist(double **R, int N, double box_length, double r_cutoff
     int y[3];
     double rshift[3];
     double dist[N][N];
-    for (x[0]=0; x[0]<n_cells; (x[0])++)
-    for (x[1]=0; x[1]<n_cells; (x[1])++)
-    for (x[2]=0; x[2]<n_cells; (x[2])++) {
-        int cell_index = x[0]*n_cells*n_cells+x[1]*n_cells+x[2];
-        // Scan the neighbor cells (including itself)
-        for (y[0]=x[0]-1; y[0]<=x[0]+1; (y[0])++)
-        for (y[1]=x[1]-1; y[1]<=x[1]+1; (y[1])++)
-        for (y[2]=x[2]-1; y[2]<=x[2]+1; (y[2])++) {
-            // Periodic boundary condition by shifting coordinates
-            for (int dim=0; dim<3; dim++) {
-                if (x[dim] < 0)
-                    rshift[dim] = -box_length;
-                else if (y[dim]>=n_cells)
-                    rshift[dim] = box_length;
-                else
-                    rshift[dim] = 0.0;
-            }
-            // Calculate the scalar cell index of the neighbor cell */
-            int cell_indy = ((y[0]+n_cells)%n_cells)*n_cells
-              +((y[1]+n_cells)%n_cells)*n_cells
-              +((y[2]+n_cells)%n_cells);
-            // Scan atom i in cell cell_index
-            int i = head[cell_index];
-            while (i != -1) {
-                // Scan atom j in neighboring cell
-                int j = head[cell_indy];
-                while (j != -1) {
-                    if (i<j)  {
-                      double rij=0.0;
-                      // Image corrected relative pair position
-                      for (int dim=0; dim<3; dim++) rij += R[i][dim]-(R[j][dim]+rshift[dim]);
-                      if (rij<=r_cutoff) {
-                        dist[i][j]=rij;
-                        dist[j][i]=rij;
-                      }
-                      else {
-                        dist[i][j]=0.0;
-                        dist[j][i]=0.0;
-                      }
-                    }
-                    j = cllist[j];
+    for (x[0]=0; x[0]<n_cells; (x[0])++) {
+      for (x[1]=0; x[1]<n_cells; (x[1])++) {
+        for (x[2]=0; x[2]<n_cells; (x[2])++) {
+          int cell_index = x[0]*n_cells*n_cells+x[1]*n_cells+x[2];
+          // Scan the neighbor cells (including itself)
+          for (y[0]=x[0]-1; y[0]<=x[0]+1; (y[0])++) {
+            for (y[1]=x[1]-1; y[1]<=x[1]+1; (y[1])++) {
+              for (y[2]=x[2]-1; y[2]<=x[2]+1; (y[2])++) {
+                // Periodic boundary condition by shifting coordinates
+                for (int dim=0; dim<3; dim++) {
+                  if (x[dim] < 0)
+                      rshift[dim] = -box_length;
+                  else if (y[dim]>=n_cells)
+                      rshift[dim] = box_length;
+                  else
+                      rshift[dim] = 0.0;
                 }
-                i = cllist[i];
+                // Calculate the scalar cell index of the neighbor cell */
+                int cell_indy = ((y[0]+n_cells)%n_cells)*n_cells
+                  +((y[1]+n_cells)%n_cells)*n_cells
+                  +((y[2]+n_cells)%n_cells);
+                // Scan atom i in cell cell_index
+                int i = head[cell_index];
+                while (i != -1) {
+                    // Scan atom j in neighboring cell
+                    int j = head[cell_indy];
+                    while (j != -1) {
+                        if (i<j)  {
+                          double rij=0.0;
+                          // Image corrected relative pair position
+                          for (int dim=0; dim<3; dim++) rij += R[i][dim]-(R[j][dim]+rshift[dim]);
+                          if (rij<=r_cutoff) {
+                            dist[i][j]=rij;
+                            dist[j][i]=rij;
+                          }
+                          else {
+                            dist[i][j]=0.0;
+                            dist[j][i]=0.0;
+                          }
+                        }
+                        j = cllist[j];
+                    }
+                    i = cllist[i];
+                }
+              }
             }
+          }
         }
+      }
     }
     return dist[N][N];
 }

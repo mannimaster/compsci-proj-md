@@ -146,18 +146,18 @@ def test_fast_neighborlist():
 
     assert n1 == n3
 
-    """
-    def test_coulomb_forces():
-        c = coulomb(std,
-                    n_boxes_short_range,
-                    Test_L,
-                    k_max,
-                    k_cut)
-        Force = c.compute_forces(Test_Positions,
-                                 Test_Labels,
-                                 Test_L)
-        assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
-    """
+"""
+def test_coulomb_forces():
+    c = coulomb(std,
+                n_boxes_short_range,
+                Test_L,
+                k_max,
+                k_cut)
+    Force = c.compute_forces(Test_Positions,
+                             Test_Labels,
+                             Test_L)
+    assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
+"""
 
 
 
