@@ -38,8 +38,6 @@ positions = np.array(([1., 1., 1.], [2., 2., 2.], [3., 3., 3.]))
 sigma     = np.array([1.,1.,1.])
 epsilon   = np.array([1.,1.,1.])
 
-#switch-parameter for Lennard-Jones-Forces
-switch_parameter = np.array([1,-1,0,0])
 
 #distance where the switch-function kicks in (Lennard-Jones-Forces)
 r_switch = r_cut_LJ*0.8

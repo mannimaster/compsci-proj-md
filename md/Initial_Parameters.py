@@ -51,6 +51,22 @@ tau = 100
 #Switch Radius in Angstroem
 r_switch = r_cut_LJ*0.9
 
+#Number of itereations
+N_steps=20
+
+#stopping condition for the loop
+threshold=1e-11
+
+#Every how many iterations the Energy should be saved
+Energy_save=1
+
+#Every how many iterations the Positions should be saved
+Frame_save=1
+
+#Every how many itereations the Temperature of the system should be saved
+Temperature_save=1
+
+
 #############################################################################################
 #############################################################################################
 #############################################################################################
@@ -72,3 +88,6 @@ p_rea = timestep/tau
 n_boxes_short_range = ( np.ceil((L_x / (float)(2))/np.max(L)) ).astype(int)
 
 dt = timestep/48.8882*1e15 #correcting Unit s --> dt = 48.8882 fs = 48.8882e-15 s
+
+
+#test -p

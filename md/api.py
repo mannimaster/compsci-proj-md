@@ -13,8 +13,161 @@
 #
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import numpy as np
+import sys
+from shutil import copyfile
+import os.path
 
-def md():
-    pass
+
+
+def get_random_starting_Positions(N, L):
+    Positions = np.zeros((N, 3))
+    Positions[:, 0] = np.linspace(0, L[0], N, endpoint=False)
+    Positions[:, 1] = np.linspace(0, L[1], N, endpoint=False)
+    Positions[:, 2] = np.linspace(0, L[2], N, endpoint=False)
+    np.random.shuffle(Positions[:, 0])
+    np.random.shuffle(Positions[:, 1])
+    np.random.shuffle(Positions[:, 2])
+    return Positions
+
+
+def api(N_steps, threshold, Energy_save, Frame_save,Temperature_save):
+    import Initial_Parameters as ip
+    from md import System
+    from md import md
+    from distribution import maxwellboltzmann
+    from scipy.special import erf
+    from scipy.constants import epsilon_0
+    import os
+    import time
+    cwd = os.getcwd()
+
+
+    Symbols = ip.Symbols
+    Coefficients = ip.Coefficients
+    Charges = ip.Charges
+    N = ip.N * np.sum(Coefficients)
+    L = ip.L
+    T = ip.T
+    dt = ip.dt
+    p_rea = ip.p_rea
+    n_boxes_short_range = ip.n_boxes_short_range
+    p_error = ip.p_error
+    Sys = System(Symbols, Coefficients, Charges, N / 2)
+    Labels = Sys.get_Labels()
+    Sigma, Epsilon = Sys.get_LJ_parameter()
+    r_cut_LJ = ip.r_cut_LJ
+    r_switch = ip.r_switch
+    m = Labels[:, 0]
+
+
+    Positions = get_random_starting_Positions(N, L)
+    Velocities = maxwellboltzmann().sample_distribution(N, m, T)
+    Forces = np.zeros((N, 3))
+
+
+    R = np.linalg.norm(Positions, axis=1)
+
+
+    L *= 1.5
+
+
+    MD = md(
+        Positions,
+        Labels,
+        Velocities,
+        Forces,
+        L,
+        T,
+        Sigma,
+        Epsilon,
+        r_switch,
+        r_cut_LJ,
+        n_boxes_short_range,
+        dt,
+        p_rea,
+        p_error,
+        Symbols)
+
+
+    start = time.time()
+    MD.minmimize_Energy(N_steps, threshold, Energy_save, Frame_save, constant=dt, path=cwd)
+    ende = time.time()
+    print("\n")
+    print(ende - start)
+
+
+    start = time.time()
+    MD.get_traj(N_steps, Energy_save, Temperature_save, Frame_save, path=cwd)
+    ende = time.time()
+    print("\n")
+    print(ende - start)
+
+
+    return
+
+
+flaggs = np.zeros(6)
+if len(sys.argv)==1:
+    api()
+elif len(sys.argv)>=2:
+
+    #Help command
+    if sys.argv[1] == "-h" or sys.argv[1] == "help":
+        print "\npython api.py"
+        print "Starts the api.py script with the parameters from the Initial_Parameters.py file that is located in the same directory as api.py. \n"
+        print "\n###.Optional Arguments.###\n"
+        print "-p <file_path>"
+        print "<file_path> has to point on your modified Initial_Parameters.py (e.g. ./Initial_Parameters.py). Copies the target <file_path> to the directory of api.py and runs the script with these new parameters. \n"
+        print "-N <integer>"
+        print "Number of iterations the simulation should run.\n"
+        print "-thr <float>"
+        print "threshold: The stopping condition. (e.g. 1e-11)\n"
+        print "-EnS <integer>"
+        print "Every how many steps the Energy of the system sould be saved.\n"
+        print "-FrS <integer>"
+        print "Every how many steps the Positions of every particle should be saved.\n"
+        print "TeS <integer>"
+        print "Every how many steps the temperatur of every particle should be saved.\n"
+
+    #checking for flaggs
+    else:
+        for i in range(len(sys.argv)):
+            if sys.argv[i]=="-N":
+                vN_steps     = sys.argv[i+1]
+                flaggs[0] = 1
+            if sys.argv[i]=="-thr":
+                vthreshold   = sys.argv[i+1]
+                flaggs[1] = 1
+            if sys.argv[i]=="-EnS":
+                vEnergy_save = sys.argv[i+1]
+                flaggs[2] = 1
+            if sys.argv[i]=="-FrS":
+                vFrame_save  = sys.argv[i+1]
+                flaggs[3] = 1
+            if sys.argv[i]=="TeS":
+                vTemperature_save= sys.argv[i+1]
+                flaggs[4] = 1
+            if sys.argv[i]=="-p":
+                if os.path.isfile(sys.argv[i+1]):
+                    flaggs[5] = 1
+                    copyfile(sys.argv[i+1],'./Initial_Parameters.py')
+                else:
+                    print "Error: -p target file does not exist."
+
+        import Initial_Parameters as ip
+        for i in range(6):
+            if flaggs[0] == 0:
+                vN_steps = ip.N_steps
+            if flaggs[1] == 0:
+                vthreshold = ip.threshold
+            if flaggs[2] == 0:
+                vEnergy_save = ip.Energy_save
+            if flaggs[3] == 0:
+                vFrame_save = ip.Frame_save
+            if flaggs[4] == 0:
+                vTemperature_save = ip.Temperature_save
+
+
+        #Starting api function
+        api(N_steps=vN_steps,threshold=vthreshold,Energy_save=vEnergy_save,Frame_save=vFrame_save,Temperature_save=vTemperature_save)
