@@ -10,21 +10,35 @@ class dynamics(object):
     def __init__(self):
         return
 
-    def __velocity_verlet_integrator(self,
-                                     Positions,
-                                     Velocities, 
-                                     Forces, 
-                                     Labels,
-                                     Sigma, 
-                                     Epsilon ,
-                                     dt,
-                                     L, 
-                                     switch_parameter, 
-                                     r_switch,
-                                     neighbours_LJ,
-                                     coulomb,
-                                     lennard_jones):
+    def velocity_verlet_integrator(self,
+                                   Positions,
+                                   Velocities, 
+                                   Forces, 
+                                   Labels,
+                                   Sigma, 
+                                   Epsilon ,
+                                   dt,
+                                   L, 
+                                   T,
+                                   switch_parameter, 
+                                   r_switch,
+                                   neighbours_LJ,
+                                   p_rea,
+                                   coulomb,
+                                   lennard_jones,
+                                   thermostat):
         ''' The Verlocity Verlet Integrator
+        Parameters:
+        --------------
+        thermostat: bool
+            if True, sampling takes place in the NVT ensemble
+            else sampling takes place in the NVE ensemble.
+            
+        Returns:
+        -------------
+        Updated Positions
+        Updated Velocities
+        Updated Forces
         '''       
 
         Forces_old = Forces
@@ -35,9 +49,9 @@ class dynamics(object):
 
         #use fmod instead of %, see, for further information see
         #https://docs.python.org/3/library/math.html#math.fmod
-        Positions_new[:,0] = math.fmod(Positions_new[:,0],L[0])
-        Positions_new[:,1] = math.fmod(Positions_new[:,1],L[1])
-        Positions_new[:,2] = math.fmod(Positions_new[:,2],L[2])
+        Positions_new[:,0] = np.remainder(Positions_new[:,0],L[0])
+        Positions_new[:,1] = np.remainder(Positions_new[:,1],L[1])
+        Positions_new[:,2] = np.remainder(Positions_new[:,2],L[2])
         
         
         Forces_new = coulomb.compute_forces(
@@ -54,8 +68,27 @@ class dynamics(object):
             neighbours_LJ)
         
         Velocities_new = Velocities + (Forces_old+Forces_new)/(2*(np.outer(Labels[:,0],np.ones(3))))*dt
+        
+        if thermostat == True:
+        
+            #Andersen Thermostat
+            N = np.size(Positions[:,0])
+            m = Labels[:,0]
 
-        return Positions_new, Velocities_new, Forces_new
+            #Draw Random Number for every Particle
+            Rand = np.random.uniform(size =N) 
+
+            #Check wich random numbers are smaller than the reassingment probability p_rea
+            indexes = np.where(Rand<p_rea) 
+            if np.size(indexes) is not 0: 
+
+                #Reassign a new Velocity to the Correspoding Particles
+                Velocities_new[indexes] = maxwellboltzmann().sample_distribution(N = np.size(indexes), m = m[indexes], T=T)        
+
+            return Positions_new, Velocities_new, Forces_new
+        
+        else:
+            return Positions_new, Velocities_new, Forces_new
     
     def Thermometer(self, Labels, Velocities):
         
@@ -91,55 +124,40 @@ class dynamics(object):
 
         return Temperature
 
-    def compute_dynamics(self,
-                         Positions,
-                         Velocities, 
-                         Forces, 
-                         Labels,
-                         Sigma, 
-                         Epsilon ,
-                         dt,
-                         L, 
-                         T,
-                         switch_parameter, 
-                         r_switch,
-                         neighbours_LJ,
-                         p_rea,
-                         coulomb,
-                         lennard_jones):
-        
-        """Propagates the System using Velocity Verlet Integrator and Andersen Thermostat"""
-        
-        # Calculate new Positions and Forces
-        Positions_new, Velocities_new, Forces_new = self.__velocity_verlet_integrator(Positions,
-                                                                                      Velocities, 
-                                                                                      Forces, 
-                                                                                      Labels,
-                                                                                      Sigma, 
-                                                                                      Epsilon ,
-                                                                                      dt,
-                                                                                      L, 
-                                                                                      switch_parameter, 
-                                                                                      r_switch,
-                                                                                      neighbours_LJ,
-                                                                                      coulomb,
-                                                                                      lennard_jones)
-        
 
-        #Andersen Thermostat
-        N = np.size(Positions[:,0])
-        m = Labels[:,0]
-        
-        #Draw Random Number for every Particle
-        Rand = np.random.uniform(size =N) 
-        
-        #Check wich random numbers are smaller than the reassingment probability p_rea
-        indexes = np.where(Rand<p_rea) 
-        if np.size(indexes) is not 0: 
-            
-            #Reassign a new Velocity to the Correspoding Particles
-            Velocities[indexes] = maxwellboltzmann().sample_distribution(N = np.size(indexes), m = m[indexes], T=T)
-            
+    def steepest_descent(self,Positions, Forces,L, c):
+        """Energy Minimization """
+
+        Positions_new = Positions + Forces*c
 
 
-        return Positions_new, Velocities_new, Forces_new
+        Positions_new[:,0] = np.remainder(Positions_new[:,0],(L[0]) )
+        Positions_new[:,1] = np.remainder(Positions_new[:,1],(L[1]) )
+        Positions_new[:,2] = np.remainder(Positions_new[:,2],(L[2]) )
+
+        return Positions_new
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
