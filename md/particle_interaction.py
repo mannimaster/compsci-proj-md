@@ -58,7 +58,7 @@ class  coulomb(__particle_interaction):
         self.k_list = self.__create_k_list(k_cut,L[0])
         return
 
-    def compute_optimal_cutoff(self, Positions, Labels, L, p_error):
+    def compute_optimal_cutoff(self, Positions, d_Pos, Labels, L, p_error):
 
         R_cut = (L[0] / (float)(2))
         K_cut = 2 * p_error / (float)(R_cut)
@@ -68,7 +68,7 @@ class  coulomb(__particle_interaction):
         T_r = time.time() - start_time
 
         start_time = time.time()
-        self.__long_range_forces(Positions, Labels)
+        self.__long_range_forces(d_Pos, Labels)
         T_k = time.time() - start_time
 
         factor = 8 * np.pi * Positions.shape[1] ** 2 * R_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
@@ -361,14 +361,14 @@ class  coulomb(__particle_interaction):
 
         return 0.5 * np.sum(np.multiply(long_range_potential,labels[:,1])) - self_energy
 
-    def compute_forces(self,Positions, Labels,L):
+    def compute_forces(self,Positions,d_Pos, Labels,L):
         '''
 
         please add here description
 
         '''
         
-        Coulumb_forces = self.__short_range_forces(Positions, Labels,L) + self.__long_range_forces(Positions, Labels)
+        Coulumb_forces = self.__short_range_forces(Positions, Labels,L) + self.__long_range_forces(d_Pos, Labels)
 
         return Coulumb_forces
       
@@ -422,18 +422,19 @@ class  coulomb(__particle_interaction):
             for j in np.arange(k):
                 dists = dists_single_cell+K[j]
 
-                norm_dists = np.linalg.norm(dists)
+                norm_dists = np.linalg.norm(dists, axis = 1)
+                norm_dists_right_size = np.outer(norm_dists, np.ones(3))
 
-                Force_short_range[i,:] += np.sum(charges*dists/norm_dists**2 
-                *( erfc( norm_dists/np.sqrt(2)/self.std )/norm_dists 
-                + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists**2/(2*self.std**2) )) ,0)
+                Force_short_range[i,:] += np.sum(charges*dists/norm_dists_right_size**2 
+                *( erfc( norm_dists_right_size/np.sqrt(2)/self.std )/norm_dists_right_size 
+                + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists_right_size**2/(2*self.std**2) )) ,0)
 
         #Getting the Pre-factor right        
         Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*self.epsilon0)
         return Force_short_range
 
 
-    def __long_range_forces(self,Positions,Labels):
+    def __long_range_forces(self,d_Pos,Labels):
         ''' Calculate the Force resulting from the long range Coulomb interaction between the Particles
 
         Parameters
@@ -456,36 +457,16 @@ class  coulomb(__particle_interaction):
 
         '''
         
-        # two k-vectors i,j have property k_i = -k_j respectively, delete one of them
-        k = np.delete(self.k_list, (np.arange((np.shape(self.k_list)[0])/2)), axis=0)
-        
-        # setup data needed for calculation
-        k_betqua = np.sum(np.square(k), axis = 1)   # |k|^2
-        num_k = np.shape(k_betqua)[0]               # number of k-vectors
-        num_Par = np.shape(Positions)[0]            # number of particles
-        f_1 = np.zeros((num_k,3))                   # placeholder for Forces during summation over k outside of for second loop
-        f_2 = np.zeros((num_k))                     # placeholder for Forces during summation over k in second for-loop
-        Force_long_range = np.zeros((num_Par,3))    # placeholder for long ranged forces
-        charges = np.zeros((num_Par,3))             # create num_Par x 3 matrix with charges
-        charges[:,0]=Labels[:,1]                    # in each column L[:,1] repeated
-        charges[:,1]=Labels[:,1] 
-        charges[:,2]=Labels[:,1]
+        k1 = np.delete(self.k_list, (np.arange((np.shape(self.k_list)[0])/2)), axis=0)
+        SPM = np.tensordot(k1,d_Pos,(1,2))
 
-        for h in np.arange(num_Par):    # loop over all particles
+        sum1= (np.tensordot(Labels[:,1],np.sin(SPM), axes =(0,2)))
 
-            for j in np.arange(num_k):  # loop over all k-vectors
-                
-                # "structure factor" sum (right sum in equation)
-                f_2[j] = sum(Labels[:,1]*np.sin(np.dot(k[j,:],(Positions[h,:]*np.ones((num_Par,3)) - Positions).transpose())))
-            
-            # complete sum over all k, (left part of equation)
-            f_1 = (((np.exp(-self.std**2/2*k_betqua)/k_betqua)*f_2)*np.ones((3,num_k))).transpose()*k  
-            
-            # actually sum over all k
-            Force_long_range[h,:] = sum(f_1)   
-        
-        # get prefactor right                                      
-        Force_long_range *= charges/(self.volume*self.epsilon0)*2      # multiply by 2 because of symmetry properties of sine
+        k_betqua = np.linalg.norm(k1,axis=1)**2
+        k_betqua_right_size = np.outer(k_betqua, np.ones(3))
+
+        k = np.exp(-self.std**2*k_betqua_right_size/2)*k1/k_betqua_right_size
+        Force_long_range = np.tensordot(sum1, k, (0,0))*(np.outer(Labels[:,1],np.ones(3))/self.volume/self.epsilon0)*2
         return Force_long_range
 
 
@@ -619,11 +600,11 @@ class lennard_jones(__particle_interaction):
             sig6 =(Sigma*np.ones( (N,3) ) )[0,index_LJ]**6
             eps = (Epsilon*np.ones( (N,3) ) )[0,index_LJ]
 
-            Positions_Difference = Positions[i,:] - Positions
+            Positions_Difference = Positions - Positions[i,:] 
             
-            Positions_Difference[:,0] = np.remainder(Positions_Difference[:,0],(L[0]/2))
-            Positions_Difference[:,1] = np.remainder(Positions_Difference[:,1],(L[1]/2))
-            Positions_Difference[:,2] = np.remainder(Positions_Difference[:,2],(L[2]/2))
+            Positions_Difference[:,0] = np.fmod(Positions_Difference[:,0],(L[0]/2))
+            Positions_Difference[:,1] = np.fmod(Positions_Difference[:,1],(L[1]/2))
+            Positions_Difference[:,2] = np.fmod(Positions_Difference[:,2],(L[2]/2))
             
             #Calculate the Distances
             dist = np.linalg.norm(Positions_Difference, axis = 1)
