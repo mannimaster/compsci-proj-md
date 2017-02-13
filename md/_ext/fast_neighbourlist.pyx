@@ -34,12 +34,12 @@ def fast_neighbourlist(
         int k
    
     
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     """
     dist = _fast_neighbourlist(
         <double**> np.PyArray_DATA(R), R.shape[0], box_length, r_cutoff)
     """
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     dist = _fast_neighbourlist(&R[0,0], R.shape[0], box_length, r_cutoff)
 
     neighbors = {}
