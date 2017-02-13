@@ -45,7 +45,7 @@ Test_L = ip.L
 Test_Labels = np.array([[1,+1.0,0],
                         [1,-1.0,1]])
 
-Test_d_Pos = np.zeros((self.N,self.N,3))
+Test_d_Pos = np.zeros((N,N,3))
 Test_d_Pos[:,:,0] = np.subtract.outer(Test_positions[:,0], Test_positions[:,0])
 Test_d_Pos[:,:,1] = np.subtract.outer(Test_positions[:,1], Test_positions[:,1])
 Test_d_Pos[:,:,2] = np.subtract.outer(Test_positions[:,2], Test_positions[:,2])
