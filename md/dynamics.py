@@ -91,7 +91,7 @@ class dynamics(object):
         else:
             return Positions_new, Velocities_new, Forces_new
     
-    def Thermometer(self, Labels, Velocities):
+    def Thermometer(self, Labels, Velocities,kB=0.0001987191):
         
         """ Compute the Instantaneos Temperature of a given Frame
         
@@ -121,7 +121,7 @@ class dynamics(object):
         # T = 2/kB/N_df * <K>
         #<K> = Sum_over_i (m_i*v_i**2)/2
         # N_df = 3*N-3
-        Temperature = np.sum(m*np.linalg.norm(internal_Velocities,axis = 1)**2 )/1.38064852e-23/(3*N-3) #Calculate the Actual Temperature
+        Temperature = np.sum(m*np.linalg.norm(internal_Velocities,axis = 1)**2 )/kB/(3*N-3) #Calculate the Actual Temperature
 
         return Temperature
 
