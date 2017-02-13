@@ -91,7 +91,8 @@ def api(N_steps, threshold, Energy_save, Frame_save,Temperature_save):
 
 
     start = time.time()
-    MD.minmimize_Energy(N_steps, threshold, Energy_save, Frame_save, constant=dt, path=cwd)
+    MD.minmimize_Energy(N_steps=N_steps, threshold=threshold, Energy_save=Energy_save, Frame_save=Frame_save, path=cwd,
+                        max_displacement=max_displacement)
     ende = time.time()
     print("\n")
     print(ende - start)

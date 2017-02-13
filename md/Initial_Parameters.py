@@ -66,6 +66,9 @@ Frame_save=1
 #Every how many itereations the Temperature of the system should be saved
 Temperature_save=1
 
+#max displacement in the minimazation step
+max_displacement = 0.1
+
 
 #############################################################################################
 #############################################################################################
