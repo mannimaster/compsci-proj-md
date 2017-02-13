@@ -150,6 +150,7 @@ class  coulomb(__particle_interaction):
             value between 1 and 0
         """
         rStar = (x - r_0) / (r_c - r_0)
+        rStarSquare = rStar**2
         rStarSquareSquare = rStarSquare**2
         return -6 * rStar * rStarSquareSquare + 15 * rStarSquareSquare - 10*rStarSquareSquare*rStarSquare + 1
 
@@ -550,6 +551,7 @@ class lennard_jones(__particle_interaction):
             value between 1 and 0
         """
         rStar       = (x-r_0)/(r_c-r_0)
+        rStarSquare = rStar**2
         rStarSquareSquare = rStarSquare**2
         return -6 * rStar * rStarSquareSquare + 15 * rStarSquareSquare - 10*rStarSquareSquare*rStarSquare + 1
 
