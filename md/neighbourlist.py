@@ -39,10 +39,9 @@ class neighbourlist(object):
         distances = {}
         N, dim = np.shape(R)
         # assume same size in all N dimensions
-        n_cells = np.ceil(box_length / r_cutoff).astype(int)
+        n_cells = np.int(box_length / r_cutoff)
         # divide simulation box into small cells of equal size r_c >= r_cutoff
         r_c = box_length / n_cells 
-        ind_vec = n_cells#np.int(box_length / r_c)
 
         #define head and list 
         head = [-1] * (n_cells+1)**3
@@ -55,7 +54,7 @@ class neighbourlist(object):
             x = np.int(R[i][0] / r_c)
             y = np.int(R[i][1] / r_c)
             z = np.int(R[i][2] / r_c)
-            cell_index = x*ind_vec*ind_vec + y*ind_vec + z
+            cell_index = x*n_cells*n_cells + y*n_cells + z
             cllist[i] = head[cell_index]
             # The last one goes to the head
             head[cell_index] = i
@@ -63,9 +62,9 @@ class neighbourlist(object):
 
         # For all cells: Look for neighbors within neighboring cells
         for cell in range(n_cells**3):
-            x = np.int(cell/(ind_vec*ind_vec)) % ind_vec
-            y = np.int(cell/ind_vec) % ind_vec
-            z = cell % ind_vec
+            x = np.int(cell/(n_cells*n_cells)) % n_cells
+            y = np.int(cell/n_cells) % n_cells
+            z = cell % n_cells
 
             nb = np.empty(dim)
             r_shift = np.empty(dim)
@@ -87,15 +86,15 @@ class neighbourlist(object):
                 for d in range(dim):
                     if (nb[d] < 0):
                         r_shift[d] = -box_length
-                    elif (nb[d]>=ind_vec):
+                    elif (nb[d]>=n_cells):
                         r_shift[d] = box_length
                     else:
                         r_shift[d] = 0.0
                   
                 # Calculate cell index nbcell of neighbor cell
-                nbcell = np.int(((nb[0]+ind_vec)%ind_vec)* ind_vec*ind_vec
-                          + ((nb[1]+ind_vec)%ind_vec) * ind_vec 
-                          + ((nb[2]+ind_vec)%ind_vec))
+                nbcell = np.int(((nb[0]+n_cells)%n_cells)* n_cells*n_cells
+                          + ((nb[1]+n_cells)%n_cells) * n_cells 
+                          + ((nb[2]+n_cells)%n_cells))
                 # where % pulls index back into appr. range
 
                 # Scan particle i in cell 
