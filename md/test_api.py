@@ -44,6 +44,12 @@ Test_R = np.linalg.norm(Test_Positions)
 Test_L = ip.L
 Test_Labels = np.array([[1,+1.0,0],
                         [1,-1.0,1]])
+
+Test_d_Pos = np.zeros((self.N,self.N,3))
+Test_d_Pos[:,:,0] = np.subtract.outer(Test_positions[:,0], Test_positions[:,0])
+Test_d_Pos[:,:,1] = np.subtract.outer(Test_positions[:,1], Test_positions[:,1])
+Test_d_Pos[:,:,2] = np.subtract.outer(Test_positions[:,2], Test_positions[:,2])
+
 neighbours = neighbourlist().compute_neighbourlist(Test_Positions, Test_L[0], r_cut_LJ)[0]
   
   
@@ -70,6 +76,7 @@ def test_coulomb_forces():
                 p_error)
     c.compute_optimal_cutoff(Test_Positions, Test_Labels, Test_L, p_error)
     Force = c.compute_forces(Test_Positions,
+                             Test_d_Pos,
                              Test_Labels,
                              Test_L)
     assert np.all(Force[0,0] == -Force[1,0]), "coulomb force is broken"
