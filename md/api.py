@@ -59,7 +59,7 @@ def api(N_steps, threshold, Energy_save, Frame_save,Temperature_save):
     r_cut_LJ = ip.r_cut_LJ
     r_switch = ip.r_switch
     m = Labels[:, 0]
-
+    max_displacement = ip.max_displacement
 
     Positions = get_random_starting_Positions(N, L)
     Velocities = maxwellboltzmann().sample_distribution(N, m, T)
