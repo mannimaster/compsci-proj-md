@@ -175,7 +175,13 @@ class md(object):
                  Symbols):
         #check input parameters
         self.positions=positions
-        self.R=np.linalg.norm(self.positions)
+        self.R=np.linalg.norm(self.positions, axis=1)
+        self.N = np.size(self.positions[:,0])
+        d_Pos = np.zeros((self.N,self.N,3))
+        d_Pos[:,:,0] = np.subtract.outer(self.positions[:,0], self.positions[:,0])
+        d_Pos[:,:,1] = np.subtract.outer(self.positions[:,1], self.positions[:,1])
+        d_Pos[:,:,2] = np.subtract.outer(self.positions[:,2], self.positions[:,2])
+        self.d_Pos = d_Pos
         self.labels=properties
         self.velocities = velocities
         self.forces = forces
@@ -193,15 +199,16 @@ class md(object):
         
         # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
         self.coulomb = coulomb(n_boxes_short_range, box, p_error, epsilon0 = epsilon_0 / (36.938 * 10**-9))
-        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,properties,box,p_error)
+        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,self.d_Pos,properties,box,p_error)
         self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
         self.r_switch = r_switch
         self.r_cut_LJ = r_cut_LJ
         self.switch_parameter = self.__get_switch_parameter()
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
         self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
-        self.N = np.size(self.positions[:,0])
+        
         self.Symbols = Symbols
+
         return
     
     @property
@@ -211,6 +218,12 @@ class md(object):
     @positions.setter
     def positions(self,xyz):
         self._positions = xyz
+        self._R = np.linalg.norm(xyz, axis=1)
+        d_Pos = np.zeros( (xyz.shape[0], xyz.shape[0], 3) )
+        d_Pos[:,:,0] = np.subtract.outer(xyz[:,0], xyz[:,0])
+        d_Pos[:,:,1] = np.subtract.outer(xyz[:,1], xyz[:,1])
+        d_Pos[:,:,2] = np.subtract.outer(xyz[:,2], xyz[:,2])
+        self._d_Pos = d_Pos
         return
      
     @property
@@ -357,6 +370,7 @@ class md(object):
                                                    r_switch = self.r_switch,
                                                    neighbours = self.neighbours_LJ)+(
         self.coulomb.compute_forces(Positions =self.positions,
+                                    d_Pos = self.d_Pos,
                                       Labels = self.labels,
                                       L = self.L) )
         return Forces
@@ -391,6 +405,7 @@ class md(object):
                                                                                self.p_rea,
                                                                                self.coulomb,
                                                                                self.lennard_jones,
+                                                                               self.d_Pos,
                                                                                thermostat = True)
         
         return Positions, Velocities, Forces
@@ -602,7 +617,7 @@ class md(object):
         for i in np.arange(N_steps):
             
             
-            constant = max_displacement/np.max(np.abs(self.forces))*self.L[0]
+            constant = max_displacement/np.mean(np.linalg.norm(self.forces, axis=1))*self.L[0]
         
             #Update Positions
             Positions_new = dynamics().steepest_descent(self.positions,self.forces,self.L, constant)
@@ -685,7 +700,8 @@ class md(object):
 
         print("Maximum Number of Steps reached")
         return
-
+      
+      
     def radial_distribution(self, distancematrix, dr, rmax, numb_of_probes, rho0):
 
         """Computes the radial distribution
