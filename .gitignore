@@ -4,4 +4,8 @@ __pycache__/
 .idea/
 .ipynb_checkpoints/
 md/api_test.py
-
+md\\Energies
+md\\Energies_minimization
+md\\Temperature
+md\\traj.xyz
+md\\traj_minimization.xyz
