@@ -64,7 +64,7 @@ class  coulomb(__particle_interaction):
         K_cut = 2 * p_error / (float)(R_cut)
 
         start_time = time.time()
-        self.__short_range_forces(Positions, Labels, L)
+        self.__short_range_forces(d_Pos, Labels, L)
         T_r = time.time() - start_time
 
         start_time = time.time()
