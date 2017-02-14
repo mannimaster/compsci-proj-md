@@ -74,7 +74,7 @@ def test_coulomb_forces():
     c = coulomb(n_boxes_short_range,
                 Test_L,
                 p_error)
-    c.compute_optimal_cutoff(Test_Positions,Test_d_Pos, Test_Labels, Test_L, p_error)
+    c.compute_optimal_cutoff(p_error, Test_L, Test_Labels, neighbours[0], neighbours[1], r_switch, 0.49 * Test_L[0], Test_Positions)
     Force = c.compute_forces(Test_d_Pos,
                              Test_Labels,
                              Test_L)
