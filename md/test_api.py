@@ -170,7 +170,7 @@ def test_create_k_list():
     Coulomb = coulomb(ip.n_boxes_short_range, ip.L, ip.p_error)
     list = Coulomb._coulomb__create_k_list(2, 5)
     result = np.where(np.linalg.norm(list, axis=1) >=2)[0]
-    assert result.shape == np.array([]).shape, "Should be zero"
+    assert result.shape == np.array([]).shape, "Should not exist."
 
 def test_switchfunction():
     Coulomb = coulomb(ip.n_boxes_short_range, ip.L, ip.p_error)
