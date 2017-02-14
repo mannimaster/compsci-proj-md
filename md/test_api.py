@@ -216,9 +216,9 @@ def test_get_energy():
               n_boxes_short_range=n_boxes_short_range, dt=ip.dt, p_rea=10 ** -2, p_error=ip.p, Symbols=Symbols)
 
     assert isinstance(MDobj,md) == True, "The md Object could not be created"
-    assert isinstance(MDobj.get_energy, float) == True, "The energy is not a number"
-    assert len(MDobj.get_potential) == N, "The potential vector size does not match the particle number"
-    assert MDobj.get_forces.shape == np.zeros((N,3)).shape, "The forces array does not match the expected size"
-    assert isinstance(MDobj.get_temperature, float) == True, "The temperature is not a number"
+    assert isinstance(MDobj.get_energy(), float) == True, "The energy is not a number"
+    assert len(MDobj.get_potential()) == N, "The potential vector size does not match the particle number"
+    assert MDobj.get_forces().shape == np.zeros((N,3)).shape, "The forces array does not match the expected size"
+    assert isinstance(MDobj.get_temperature(), float) == True, "The temperature is not a number"
     return
  
