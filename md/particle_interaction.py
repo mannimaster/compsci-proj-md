@@ -497,15 +497,16 @@ class  coulomb(__particle_interaction):
         return F_short
 
 
+    
     def __long_range_forces(self,d_Pos,Labels):
         ''' Calculate the Force resulting from the long range Coulomb interaction between the Particles
 
         Parameters
         ---------------
 
-        Positions: Nx3 Array
+        d_Pos: NxNx3 Array
             Array with N rows and 3 Columns, each row i contains the x,y and z coordinates of particle i.
-
+            
         Labels: Nx3 Array
             Array with N rows and ? Columns. The third Column should contain labels, that specify the chemical species of the Particles.
             Particle A should have the label 0 and Particle B should have the label 1. The first column contains the masses, the second the charge.
@@ -519,16 +520,21 @@ class  coulomb(__particle_interaction):
             Array with N rows and 3 Columns. Each Row i contains the long-range-Force acting upon Particle i componentwise. 
 
         '''
-        
+        # k_i = - k_j for one pair i,j, delete one of them
         k1 = np.delete(self.k_list, (np.arange((np.shape(self.k_list)[0])/2)), axis=0)
+        
+        # compute scalar product between k and (r_i - r_j), SPM = MxNxN array, M = number of k-vectors, N = number of particles
         SPM = np.tensordot(k1,d_Pos,(1,2))
-
+        # compute right sum in equation, return MxN array
         sum1= (np.tensordot(Labels[:,1],np.sin(SPM), axes =(0,2)))
-
+        
+        # compute |k|^2
         k_betqua = np.linalg.norm(k1,axis=1)**2
+        # obtain Mx3 array
         k_betqua_right_size = np.outer(k_betqua, np.ones(3))
-
+        # compute exp(std^2*|k|^2/2)*k/|k|^2
         k = np.exp(-self.std**2*k_betqua_right_size/2)*k1/k_betqua_right_size
+        # executes sum over all k and multiplication with q_i / (V*epsilon_0)
         Force_long_range = np.tensordot(sum1, k, (0,0))*(np.outer(Labels[:,1],np.ones(3))/self.volume/self.epsilon0)*2
         return Force_long_range
 
