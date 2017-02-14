@@ -74,9 +74,8 @@ def test_coulomb_forces():
     c = coulomb(n_boxes_short_range,
                 Test_L,
                 p_error)
-    c.compute_optimal_cutoff(Test_Positions,Test_d_Pos, Test_Labels, Test_L, p_error)
-    Force = c.compute_forces(Test_Positions,
-                             Test_d_Pos,
+    c.compute_optimal_cutoff(p_error, Test_L, Test_Labels, neighbours[0], neighbours[1], r_switch, 0.49 * Test_L[0], Test_Positions)
+    Force = c.compute_forces(Test_d_Pos,
                              Test_Labels,
                              Test_L)
     assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
@@ -135,7 +134,7 @@ def test_neighborlist():
 def test_SymmetriesPotC():
     #tests coulomb potential function with equidistant charges where the middle one has twice the negativ charge
     potential        = coulomb(ip.n_boxes_short_range,ip.L, ip.p)
-    potential.compute_optimal_cutoff(Positions=ip.positions, d_Pos=ip.d_Pos, Labels=ip.labels, L=ip.L, p_error=ip.p)
+    potential.compute_optimal_cutoff(p_error, Test_L, Test_Labels, neighbours[0], neighbours[1], r_switch, 0.49 * Test_L[0], Test_Positions)
     result           = potential.compute_potential(positions=ip.positions, labels=ip.labels, neighbours=ip.neighbours,
                                                    distances=ip.distances, r_s=np.sqrt(3*2**2), r_c=np.sqrt(3*2**2)+0.1)
     assert ( abs(result[0]/result[2])<1+10**(-8) ) , "Potential does not have the expected symmetrie. P1 and P3 should be the same."
