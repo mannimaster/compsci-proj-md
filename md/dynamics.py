@@ -55,8 +55,7 @@ class dynamics(object):
         Positions_new[:,2] = np.remainder(Positions_new[:,2],L[2])
         
         
-        Forces_new = coulomb.compute_forces(
-            Positions_new, d_Pos,
+        Forces_new = coulomb.compute_forces(d_Pos,
             Labels,
             L)+lennard_jones.compute_forces(
             Positions_new,
