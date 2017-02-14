@@ -407,14 +407,14 @@ class  coulomb(__particle_interaction):
         return Coulumb_forces
       
 
-    def __short_range_forces(self,Positions, Labels,L):
+    def __short_range_forces(self,d_Pos, Labels,L):
 
         ''' Calculate the Force resulting from the short range coulomb interaction between the Particles
 
         Parameters
         ---------------
 
-        Positions: Nx3 Array
+        d_Pos: NxNx3 Array
             Array with N rows and 3 Columns, each row i contains the x,y and z coordinates of particle i.
 
         R: Nx1 Array
@@ -440,32 +440,59 @@ class  coulomb(__particle_interaction):
         K[:,1] *=L[1]
         K[:,2] *=L[2]
 
-        N = np.size(Positions[:,0])
+        N = d_Pos.shape[0]
         Force_short_range = np.zeros((N,3))
-        k = np.size(K[:,0])
-        charges_pre_delete = np.zeros((N,3))
-        charges_pre_delete[:,0]=Labels[:,1]  
-        charges_pre_delete[:,1]=Labels[:,1] 
-        charges_pre_delete[:,2]=Labels[:,1] 
-        for i in np.arange(N):
+        
+        
+ 
+        d_Pos_fix = np.zeros(((N-1 )*N,3))
+        d_Pos_fix[:,0] = np.delete(d_Pos[:,:,0].reshape(-1),np.where(np.linalg.norm(d_Pos,axis=2).reshape(-1)==0)).reshape((N-1)*N)
+        d_Pos_fix[:,1] = np.delete(d_Pos[:,:,1].reshape(-1),np.where(np.linalg.norm(d_Pos,axis=2).reshape(-1)==0)).reshape((N-1)*N)
+        d_Pos_fix[:,2] = np.delete(d_Pos[:,:,2].reshape(-1),np.where(np.linalg.norm(d_Pos,axis=2).reshape(-1)==0)).reshape((N-1)*N)
 
-            dists_single_cell_pre_delete = Positions[i,:]-Positions
-            dists_single_cell = np.delete(dists_single_cell_pre_delete,i,0)
-            charges = np.delete(charges_pre_delete,i,0)
-            #This Skript paralellizes the sum over j and executes the sum over vectors n within the loop
-            for j in np.arange(k):
-                dists = dists_single_cell+K[j]
+        Pos_Comb = np.zeros((K.shape[0], (N-1)*N,3))
+        Pos_Comb[:,:,0]=np.add.outer(K[:,0],d_Pos_fix[:,0]) # x
+        Pos_Comb[:,:,1]=np.add.outer(K[:,1],d_Pos_fix[:,1]) # y
+        Pos_Comb[:,:,2]=np.add.outer(K[:,2],d_Pos_fix[:,2]) # z
 
-                norm_dists = np.linalg.norm(dists, axis = 1)
-                norm_dists_right_size = np.outer(norm_dists, np.ones(3))
 
-                Force_short_range[i,:] += np.sum(charges*dists/norm_dists_right_size**2 
-                *( erfc( norm_dists_right_size/np.sqrt(2)/self.std )/norm_dists_right_size 
-                + np.sqrt(2.0/np.pi)/self.std*np.exp(-norm_dists_right_size**2/(2*self.std**2) )) ,0)
+        ind = np.where(np.linalg.norm(d_Pos,axis=2).reshape(-1)==0)[0]
+        ind_1 =(np.cumsum(np.ones(ind.shape))*N-N).astype(int)
 
-        #Getting the Pre-factor right        
-        Force_short_range = Force_short_range* charges_pre_delete /(8*np.pi*self.epsilon0)
-        return Force_short_range
+        Pos_Comb_norm_1 = np.linalg.norm(Pos_Comb, axis=2)
+        Pos_Comb_norm_2 = np.power(Pos_Comb_norm_1,2)
+
+        charges = np.multiply.outer(Labels[:,1],np.ones(N)).reshape(-1)
+        charges = np.delete(charges, np.where(np.linalg.norm(d_Pos,axis=2).reshape(-1)==0))
+
+        F_short = np.zeros((MD.N,3))
+        #x
+        F_short[:,0] =np.sum(np.insert(np.sum(charges*Pos_Comb[:,:,0]/Pos_Comb_norm_2
+                                              *(erfc( Pos_Comb_norm_1/np.sqrt(2.0) /self.std) /Pos_Comb_norm_1 
+                                                +np.sqrt(2.0/np.pi) /self.std *np.exp( -Pos_Comb_norm_2 /2.0 /self.std**2 ) )
+                                              ,axis=0)
+                                       ,ind_1,0).reshape(MD.N,MD.N) 
+                             ,axis=0)
+        #y
+        F_short[:,1] =np.sum(np.insert(np.sum(charges*Pos_Comb[:,:,1]/Pos_Comb_norm_2
+                                              *(erfc( Pos_Comb_norm_1/np.sqrt(2.0) /self.std) /Pos_Comb_norm_1 
+                                                +np.sqrt(2.0/np.pi) /self.std *np.exp( -Pos_Comb_norm_2 /2.0 /self.std**2 ) )
+                                              ,axis=0)
+                                       ,ind_1,0).reshape(MD.N,MD.N) 
+                             ,axis=0)
+        #z
+        F_short[:,2] =np.sum(np.insert(np.sum(charges*Pos_Comb[:,:,2]/Pos_Comb_norm_2
+                                              *(erfc( Pos_Comb_norm_1/np.sqrt(2.0) /self.std) /Pos_Comb_norm_1 
+                                                +np.sqrt(2.0/np.pi) /self.std *np.exp( -Pos_Comb_norm_2 /2.0 /self.std**2 ) )
+                                              ,axis=0)
+                                       ,ind_1,0).reshape(N,N) 
+                             ,axis=0)
+        F_short*=np.outer(Labels[::-1,1],np.ones(3))/(8*np.pi*self.epsilon0)
+
+        F_short
+        
+        
+        return F_short
 
 
     def __long_range_forces(self,d_Pos,Labels):

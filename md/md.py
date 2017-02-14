@@ -177,11 +177,11 @@ class md(object):
         self.positions=positions
         self.R=np.linalg.norm(self.positions, axis=1)
         self.N = np.size(self.positions[:,0])
-        d_Pos = np.zeros((self.N,self.N,3))
-        d_Pos[:,:,0] = np.subtract.outer(self.positions[:,0], self.positions[:,0])
-        d_Pos[:,:,1] = np.subtract.outer(self.positions[:,1], self.positions[:,1])
-        d_Pos[:,:,2] = np.subtract.outer(self.positions[:,2], self.positions[:,2])
-        self.d_Pos = d_Pos
+        first_d_Pos = np.zeros((self.N,self.N,3))
+        first_d_Pos[:,:,0] = np.subtract.outer(self.positions[:,0], self.positions[:,0])
+        first_d_Pos[:,:,1] = np.subtract.outer(self.positions[:,1], self.positions[:,1])
+        first_d_Pos[:,:,2] = np.subtract.outer(self.positions[:,2], self.positions[:,2])
+        self.d_Pos = first_d_Pos
         self.labels=properties
         self.velocities = velocities
         self.forces = forces
@@ -218,12 +218,12 @@ class md(object):
     @positions.setter
     def positions(self,xyz):
         self._positions = xyz
-        self._R = np.linalg.norm(xyz, axis=1)
-        d_Pos = np.zeros( (xyz.shape[0], xyz.shape[0], 3) )
-        d_Pos[:,:,0] = np.subtract.outer(xyz[:,0], xyz[:,0])
-        d_Pos[:,:,1] = np.subtract.outer(xyz[:,1], xyz[:,1])
-        d_Pos[:,:,2] = np.subtract.outer(xyz[:,2], xyz[:,2])
-        self._d_Pos = d_Pos
+        self.R = np.linalg.norm(xyz, axis=1)
+        new_d_Pos = np.zeros( (xyz.shape[0], xyz.shape[0], 3) )
+        new_d_Pos[:,:,0] = np.subtract.outer(xyz[:,0], xyz[:,0])
+        new_d_Pos[:,:,1] = np.subtract.outer(xyz[:,1], xyz[:,1])
+        new_d_Pos[:,:,2] = np.subtract.outer(xyz[:,2], xyz[:,2])
+        self.d_Pos = new_d_Pos
         return
      
     @property
