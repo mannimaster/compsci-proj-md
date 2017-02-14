@@ -185,7 +185,7 @@ def test_SymmetriesPotLJ2():
 
 
 def test_get_energy():
-    N = Test_Positions.shape[1]
+    N = int(len(Test_Labels[:, 0]))
     Positions = np.zeros((N, 3))
     Positions[:, 0] = np.linspace(0.1, Test_L[0], N, endpoint=False)
     Positions[:, 1] = np.linspace(0.1, Test_L[1], N, endpoint=False)
