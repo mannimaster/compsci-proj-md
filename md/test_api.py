@@ -211,13 +211,8 @@ def test_get_energy():
     Velocities = maxwellboltzmann().sample_distribution(N, Test_Labels[:, 0], ip.T)
     Forces = np.zeros(Velocities.shape)
 
-    try:
-        MDobj = md.md(positions=Positions, properties=Test_Labels, velocities=Velocities, forces=Forces, box=Test_L,
-                  Temperature=ip.T, Sigma_LJ=ip.sigma, Epsilon_LJ=ip.epsilon, r_switch=r_switch, r_cut_LJ=ip.r_cut_LJ,
-                  n_boxes_short_range=n_boxes_short_range, dt=ip.dt, p_rea=10 ** -2, p_error=ip.p, Symbols=Symbols)
-    except:
-        MDobj=0
-
-    assert(isinstance(MDobj,md))
+    MDobj = md.md(positions=Positions, properties=Test_Labels, velocities=Velocities, forces=Forces, box=Test_L,
+              Temperature=ip.T, Sigma_LJ=ip.sigma, Epsilon_LJ=ip.epsilon, r_switch=r_switch, r_cut_LJ=ip.r_cut_LJ,
+              n_boxes_short_range=n_boxes_short_range, dt=ip.dt, p_rea=10 ** -2, p_error=ip.p, Symbols=Symbols)
     return
  
