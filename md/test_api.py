@@ -167,8 +167,20 @@ def test_SymmetriesPotLJ2():
     assert ( result[2]!=result[1] )                , "Potential does not have the expected symmetrie. P3 and P2 should not be the same."
     return
 
-    
+def test_optimal_cutoff():
+    Coulomb = coulomb(ip.n_boxes_short_range,ip.L,ip.p_error)
+    r_opt_cut, k_opt_cut, std = Coulomb.compute_optimal_cutoff(ip.positions,ip.d_Pos,ip.labels, ip.L, ip.p_error,)
 
-test_SymmetriesPotC()
-test_SymmetriesPotLJ()
-test_SymmetriesPotLJ2()
+    assert (type(k_opt_cut)==float), "k_opt_cut: Wrong data type."
+    assert (type(r_opt_cut)==float), "r_opt_cut: Wrong data type."
+    assert (type(std)==float), "std: Wrong data type."
+
+def test_create_k_list():
+    Coulomb = coulomb(ip.n_boxes_short_range, ip.L, ip.p_error)
+    list = Coulomb._coulomb__create_k_list(2, 5)
+    result = np.where(np.linalg.norm(list, axis=1) >=2)[0]
+    assert result.shape == np.array([]).shape, "Should be zero"
+
+
+test_create_k_list()
+#test_optimal_cutoff()
