@@ -377,8 +377,7 @@ class md(object):
                                                    switch_parameter = self.switch_parameter, 
                                                    r_switch = self.r_switch,
                                                    neighbours = self.neighbours_LJ)+(
-        self.coulomb.compute_forces(Positions =self.positions,
-                                    d_Pos = self.d_Pos,
+        self.coulomb.compute_forces(d_Pos = self.d_Pos,
                                       Labels = self.labels,
                                       L = self.L) )
         return Forces
