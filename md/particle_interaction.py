@@ -58,22 +58,24 @@ class  coulomb(__particle_interaction):
         self.k_list = self.__create_k_list(k_cut,L[0])
         return
 
-    def compute_optimal_cutoff(self, Positions, d_Pos, Labels, L, p_error):
+    def compute_optimal_cutoff(self, p_error, L, labels, neighbours, distances, r_switch, r_cut, positions):
 
-        R_cut = (L[0] / (float)(2))
-        K_cut = 2 * p_error / (float)(R_cut)
+        K_cut = 2 * p_error / (float)(r_cut)
 
         start_time = time.time()
-        self.__short_range_forces(d_Pos, Labels, L)
+        #self.__short_range_forces(d_Pos, Labels, L)
+        self.__short_range_energy(labels, neighbours, distances, r_switch, r_cut)
         T_r = time.time() - start_time
 
         start_time = time.time()
-        self.__long_range_forces(d_Pos, Labels)
+        #self.__long_range_forces(d_Pos, Labels)
+        self.__long_range_energy(labels, positions)
         T_k = time.time() - start_time
 
-        factor = 8 * np.pi * Positions.shape[1] ** 2 * R_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
+        factor = 8 * np.pi * positions.shape[1] ** 2 * r_cut ** 3 / (float)(self.volume ** 2 * K_cut ** 3)
 
-        R_opt_cut = np.sqrt(p_error / (float)(np.pi)) * (factor * T_k / (float)(T_r)) ** (1 / 6.0) * (L[0] / (Positions.shape[1] ** (1 / 6.0)))
+        R_opt_cut = np.sqrt(p_error / (float)(np.pi)) * (factor * T_k / (float)(T_r)) ** (1 / 6.0) * \
+                    (L[0] / (positions.shape[1] ** (1 / 6.0)))
         K_opt_cut = 2 * p_error / R_opt_cut
 
         self.k_list = self.__create_k_list(K_opt_cut,L[0])
