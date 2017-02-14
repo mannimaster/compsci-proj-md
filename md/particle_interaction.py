@@ -465,20 +465,20 @@ class  coulomb(__particle_interaction):
         charges = np.multiply.outer(Labels[:,1],np.ones(N)).reshape(-1)
         charges = np.delete(charges, np.where(np.linalg.norm(d_Pos,axis=2).reshape(-1)==0))
 
-        F_short = np.zeros((MD.N,3))
+        F_short = np.zeros((N,3))
         #x
         F_short[:,0] =np.sum(np.insert(np.sum(charges*Pos_Comb[:,:,0]/Pos_Comb_norm_2
                                               *(erfc( Pos_Comb_norm_1/np.sqrt(2.0) /self.std) /Pos_Comb_norm_1 
                                                 +np.sqrt(2.0/np.pi) /self.std *np.exp( -Pos_Comb_norm_2 /2.0 /self.std**2 ) )
                                               ,axis=0)
-                                       ,ind_1,0).reshape(MD.N,MD.N) 
+                                       ,ind_1,0).reshape(N,N) 
                              ,axis=0)
         #y
         F_short[:,1] =np.sum(np.insert(np.sum(charges*Pos_Comb[:,:,1]/Pos_Comb_norm_2
                                               *(erfc( Pos_Comb_norm_1/np.sqrt(2.0) /self.std) /Pos_Comb_norm_1 
                                                 +np.sqrt(2.0/np.pi) /self.std *np.exp( -Pos_Comb_norm_2 /2.0 /self.std**2 ) )
                                               ,axis=0)
-                                       ,ind_1,0).reshape(MD.N,MD.N) 
+                                       ,ind_1,0).reshape(N,N) 
                              ,axis=0)
         #z
         F_short[:,2] =np.sum(np.insert(np.sum(charges*Pos_Comb[:,:,2]/Pos_Comb_norm_2
