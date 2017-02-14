@@ -75,8 +75,7 @@ def test_coulomb_forces():
                 Test_L,
                 p_error)
     c.compute_optimal_cutoff(Test_Positions,Test_d_Pos, Test_Labels, Test_L, p_error)
-    Force = c.compute_forces(Test_Positions,
-                             Test_d_Pos,
+    Force = c.compute_forces(Test_d_Pos,
                              Test_Labels,
                              Test_L)
     assert np.all(Force[0,:] == -Force[1,:]), "coulomb force is broken"
