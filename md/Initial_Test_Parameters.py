@@ -52,6 +52,9 @@ L = np.array([L_x, L_y, L_z])
 #Reassignment Probability
 p_rea = dt/tau
 
+# Accuracy Factor
+# the cutoff-error is given by exp(-p)
+p_error = 10.0
 #Coulomb interaction sigma
 std = r_cut_coulomb/np.sqrt(2*p)
 

@@ -166,8 +166,17 @@ def test_SymmetriesPotLJ2():
     assert ( result[2]!=result[1] )                , "Potential does not have the expected symmetrie. P3 and P2 should not be the same."
     return
 
-    
+def test_create_k_list():
+    Coulomb = coulomb(ip.n_boxes_short_range, ip.L, ip.p_error)
+    list = Coulomb._coulomb__create_k_list(2, 5)
+    result = np.where(np.linalg.norm(list, axis=1) >=2)[0]
+    assert result.shape == np.array([]).shape, "Should not exist."
 
-test_SymmetriesPotC()
-test_SymmetriesPotLJ()
-test_SymmetriesPotLJ2()
+def test_switchfunction():
+    Coulomb = coulomb(ip.n_boxes_short_range, ip.L, ip.p_error)
+    assert Coulomb._coulomb__switchFunction(1.,1.,2.)==1.,"The switchfunction should be one here."
+    assert Coulomb._coulomb__switchFunction(2., 1., 2.) == 0., "The switchfunction should be zero here."
+
+    LJpotential = lennard_jones()
+    assert LJpotential._lennard_jones__switchFunction(1.,1.,2.)==1.,"The switchfunction should be one here."
+    assert LJpotential._lennard_jones__switchFunction(2., 1., 2.) == 0., "The switchfunction should be zero here."
