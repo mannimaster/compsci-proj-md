@@ -129,19 +129,19 @@ elif len(sys.argv)>=2:
     else:
         for i in range(len(sys.argv)):
             if sys.argv[i]=="-N":
-                vN_steps     = sys.argv[i+1]
+                vN_steps     = int(sys.argv[i+1])
                 flaggs[0] = 1
             if sys.argv[i]=="-thr":
-                vthreshold   = sys.argv[i+1]
+                vthreshold   = float(sys.argv[i+1])
                 flaggs[1] = 1
             if sys.argv[i]=="-EnS":
-                vEnergy_save = sys.argv[i+1]
+                vEnergy_save = int(sys.argv[i+1])
                 flaggs[2] = 1
             if sys.argv[i]=="-FrS":
-                vFrame_save  = sys.argv[i+1]
+                vFrame_save  = int(sys.argv[i+1])
                 flaggs[3] = 1
             if sys.argv[i]=="TeS":
-                vTemperature_save= sys.argv[i+1]
+                vTemperature_save= int(sys.argv[i+1])
                 flaggs[4] = 1
             if sys.argv[i]=="-p":
                 if os.path.isfile(sys.argv[i+1]):
