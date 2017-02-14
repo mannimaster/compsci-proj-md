@@ -456,6 +456,7 @@ class md(object):
         traj_file = ''.join([path,"\\traj.xyz"])
         Energy_file = ''.join([path,"\\Energies"])
         Temperature_file = ''.join([path,"\\Temperature"])
+        rdf_file = ''.join([path,"\\rdf"])
         string1 = (''.join([str(self.N), "\n", "\n"]))
 
         #write header
@@ -467,9 +468,6 @@ class md(object):
         frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
         #Positions in Angstroem
-        #frame['var2'] = self.positions[:,0]*1e10
-        #frame['var3'] = self.positions[:,1]*1e10
-        #frame['var4'] = self.positions[:,2]*1e10
         frame['var2'] = self.positions[:, 0]
         frame['var3'] = self.positions[:, 1]
         frame['var4'] = self.positions[:, 2]
@@ -488,6 +486,28 @@ class md(object):
         counter_Temperature = 0
         counter_Frame = 0
         E_index = -1
+
+        #######################################################################
+        ### write radial distribution function of current frame into a file ###
+        #######################################################################
+        number_part_A = np.unique(Labels[:, 2], return_counts=True)[1][0]
+        number_part_B = np.unique(Labels[:, 2], return_counts=True)[1][1]
+
+        totdismatrix = np.linalg.norm(self._d_Pos, axis=2)
+        distancematrix_particle_A = totdismatrix[number_part_B:self.N, 0:number_part_A]
+        distancematrix_particle_B = totdismatrix[0:number_part_A, number_part_B:self.N]
+
+        # Volumenelement hat Dicke 1 Angstroem
+        # maximal bis L/2 wird die Distribution genommen
+        histvector_particle_A = self.radial_distribution(distancematrix_particle_A, 1, self.L[0]/2, self.N/2, self.N / self.L[0]**3)
+        histvector_particle_B = self.radial_distribution(distancematrix_particle_B, 1, self.L[0]/2, self.N/2, self.N / self.L[0]**3)
+
+        myfile = open(rdf_file, 'w')
+        myfile.write(str(histvector_particle_A) + "\n" + str(histvector_particle_B) + "\n")
+        myfile.close()
+        #######################################################################
+        #######################################################################
+        #######################################################################
 
         for i in np.arange(N_steps):
 
@@ -518,10 +538,6 @@ class md(object):
                 frame = np.zeros((self.N), dtype=[('var1', 'U16'), ('var2',float), ('var3', float), ('var4',float)])
                 frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
-                #Positions in Angstroem
-                #frame['var2'] = self.positions[:,0]*1e10
-                #frame['var3'] = self.positions[:,1]*1e10
-                #frame['var4'] = self.positions[:,2]*1e10
                 frame['var2'] = self.positions[:,0]
                 frame['var3'] = self.positions[:,1]
                 frame['var4'] = self.positions[:,2]
@@ -534,6 +550,28 @@ class md(object):
                 myfile.write(string1)
                 myfile.close()
 
+                #######################################################################
+                ### write radial distribution function of current frame into a file ###
+                #######################################################################
+                number_part_A = np.unique(Labels[:, 2], return_counts=True)[1][0]
+                number_part_B = np.unique(Labels[:, 2], return_counts=True)[1][1]
+
+                totdismatrix = np.linalg.norm(self._d_Pos, axis=2)
+                distancematrix_particle_A = totdismatrix[number_part_B:self.N, 0:number_part_A]
+                distancematrix_particle_B = totdismatrix[0:number_part_A, number_part_B:self.N]
+
+                histvector_particle_A = self.radial_distribution(distancematrix_particle_A, 1, self.L[0] / 2,
+                                                                 self.N / 2, self.N / self.L[0] ** 3)
+                histvector_particle_B = self.radial_distribution(distancematrix_particle_B, 1, self.L[0] / 2,
+                                                                 self.N / 2, self.N / self.L[0] ** 3)
+
+                myfile = open(rdf_file, 'a')
+                myfile.write(str(histvector_particle_A) + "\n" + str(histvector_particle_B) + "\n")
+                myfile.close()
+                #######################################################################
+                #######################################################################
+                #######################################################################
+
                 counter_Frame = 0
 
             sys.stdout.write("\r")
@@ -542,12 +580,83 @@ class md(object):
 
         # save Energy       
         np.savetxt(Energy_file, Energy)
-        # save Temperature         
+        # save Temperature
         np.savetxt(Temperature_file, Temperature)
 
         print("Simulation Completed")
         return
-    
+
+    def import_traj(self, file_path):
+        '''
+        converts a xyz-file back to a trajectory
+
+        Parameters
+        ----------------
+        file_path: string
+            full path to the xyz-file containing the trajectories
+
+        Returns
+        ----------------
+        particle_type_A: string
+            type of particle A
+
+        particle_num_A: int
+            number of particle A in the trajectory
+            the first particle_num_A entries of the position_array in each frame belongs to particle A
+
+        particle_type_B: string
+            type of particle B
+
+        particle_num_B:
+            number of particle B in the trajectory
+            the last particle_num_B entries in each frame belongs to particle B
+
+        position_array: M x N x 3 array
+            array containing the frames with the positions of all particles
+            M -> frame
+            N -> particle
+            3 -> 3 dimensional (x, y, z)
+
+        '''
+
+        #read in the lines and convert the list into a numpy array of strings
+        myfile = open(file_path, 'r')
+        lines = myfile.readlines()
+        position_array = np.array(lines).astype(str)
+
+        #reads the first line to determine the total number of particles
+        particle_num = int(np.fromfile(file_path, int, 1, "\n"))
+        #reads the first table entry to determine the particle type A
+        particle_type_A = position_array[2][0:position_array[2].find(' ')]
+        #reads the last table entry to determine the particle type A
+        particle_type_B = position_array[particle_num + 1][0:position_array[particle_num + 1].find(' ')]
+
+        #deletes all blank lines and all lines containing the number of particles
+        position_array = np.delete(position_array, np.where(position_array == str(particle_num) + '\n'))
+        position_array = np.delete(position_array, np.where(position_array == '\n'))
+
+        #counts the number of particle A and B
+        particle_num_A = np.array([l.split(' ') for l in position_array], dtype=None)[0:particle_num, 0].tolist().count(
+            'A')
+        particle_num_B = np.array([l.split(' ') for l in position_array], dtype=None)[0:particle_num, 0].tolist().count(
+            'B')
+
+        #deletes the particle type in all rows and the \n
+        position_array = np.char.replace(position_array, particle_type_A + ' ', '')
+        position_array = np.char.replace(position_array, particle_type_B + ' ', '')
+        position_array = np.char.replace(position_array, '\n', '')
+        #converts the blankspace seperated numbers in the string to float values
+        position_array = np.array([l.split(' ') for l in position_array], dtype=np.float32)
+
+        #calculates the number of trajectories in the array
+        number_of_traj = int(position_array.shape[0] / particle_num)
+
+        #reshapes the 1D array to the M x N x 3 array
+        position_array = position_array.reshape(number_of_traj, particle_num, 3)
+
+        return (particle_type_A, particle_num_A, particle_type_B, particle_num_B, position_array)
+
+
     def minmimize_Energy(self,N_steps, threshold, Energy_save, Frame_save, max_displacement, path):
         """Minimizes the Energy by steepest descent
 
@@ -594,9 +703,6 @@ class md(object):
         frame['var1'] = self.Symbols[self.labels[:,2].astype(int)]
 
         #Positions in Angstroem
-        #frame['var2'] = self.positions[:,0]*1e10
-        #frame['var3'] = self.positions[:,1]*1e10
-        #frame['var4'] = self.positions[:,2]*1e10
         frame['var2'] = self.positions[:,0]
         frame['var3'] = self.positions[:,1]
         frame['var4'] = self.positions[:,2]
@@ -737,7 +843,9 @@ class md(object):
         volume_factor = 4 * np.pi / 3
 
         for iteration in range (0,len(histlist)):
-            histlist[iteration] = len(distancematrix[distancematrix < iteration*dr + dr])-len(distancematrix[distancematrix <= iteration*dr])
+            histlist[iteration] = len(distancematrix[distancematrix < iteration*dr + dr]) \
+                                  - len(distancematrix[distancematrix <= iteration*dr])
+
             binvolume = volume_factor * ((iteration * dr + dr) ** 3 - (iteration * dr) ** 3)
             histlist[iteration] /= binvolume
 
