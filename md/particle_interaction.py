@@ -395,14 +395,14 @@ class  coulomb(__particle_interaction):
 
         return 0.5 * np.sum(np.multiply(long_range_potential,labels[:,1])) - self_energy
 
-    def compute_forces(self,Positions,d_Pos, Labels,L):
+    def compute_forces(self,d_Pos, Labels,L):
         '''
 
         please add here description
 
         '''
         
-        Coulumb_forces = self.__short_range_forces(Positions, Labels,L) + self.__long_range_forces(d_Pos, Labels)
+        Coulumb_forces = self.__short_range_forces(d_Pos, Labels,L) + self.__long_range_forces(d_Pos, Labels)
 
         return Coulumb_forces
       
