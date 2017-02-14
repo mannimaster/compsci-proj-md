@@ -160,7 +160,6 @@ class  coulomb(__particle_interaction):
     def __short_range_potential(self, labels, neighbours, distances, r_s, r_c):#distances should have the same format/order as the neighborlist
         """
         short range Coulomb potential
-        __short_range_potential(self, positions,  labels, n_particles, neighbours, distances,)
 
         Calculates the short range coulomb potential using a neighbor list.
 
@@ -574,7 +573,6 @@ class lennard_jones(__particle_interaction):
     def compute_potential(self, sigma, epsilon, labels, neighbours, distances, r_s, r_c):
         """
         Lennard Jones
-        potentialShort(self, sigma, epsilon, labels, neighbours, distances)
 
         Calculates the short range Lennard Jones potential using a neighbor list.
 
