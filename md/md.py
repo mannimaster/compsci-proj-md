@@ -205,7 +205,7 @@ class md(object):
 
         self.neighbours_coulomb, self.distances_coulomb = neighbourlist().compute_neighbourlist(positions, box[0],
                                                                                                 0.49 * box[0])
-        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(self, p_error, box, properties, self.neighbours_coulomb, self.distances_coulomb, r_switch, 0.49 * box[0], positions)
+        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(p_error, box, properties, self.neighbours_coulomb, self.distances_coulomb, r_switch, 0.49 * box[0], positions)
         self.neighbours_coulomb, self.distances_coulomb = neighbourlist().compute_neighbourlist(positions, box[0],
                                                                                                 self.r_cut_coulomb)
 
