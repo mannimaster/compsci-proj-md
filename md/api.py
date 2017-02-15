@@ -117,13 +117,13 @@ elif len(sys.argv)>=2:
         print ("-N <integer>")
         print ("Number of iterations the simulation should run.\n")
         print ("-thr <float>")
-        print ("threshold: The stopping condition. (e.g. 1e-11)\n")
+        print ("threshold: A stopping condition for the energy minimazation. (e.g. 1e-11)\n")
         print ("-EnS <integer>")
-        print ("Every how many steps the Energy of the system sould be saved.\n")
+        print ("Energy saved every <integer> steps.\n")
         print ("-FrS <integer>")
-        print ("Every how many steps the Positions of every particle should be saved.\n")
+        print ("Positions saved every <integer> steps.\n")
         print ("TeS <integer>")
-        print ("Every how many steps the temperatur of every particle should be saved.\n")
+        print ("Temperature saved every <integer> steps.\n")
 
     #checking for flaggs
     else:
