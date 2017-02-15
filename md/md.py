@@ -196,17 +196,22 @@ class md(object):
         self.dt = dt
         self.p_rea = p_rea
         self.n_boxes_short_range= n_boxes_short_range
-        
-        # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
-        self.coulomb = coulomb(n_boxes_short_range, box, p_error, epsilon0 = epsilon_0 / (36.938 * 10**-9))
-        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(positions,self.d_Pos,properties,box,p_error)
-        self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
+
         self.r_switch = r_switch
         self.r_cut_LJ = r_cut_LJ
+
+        # epsilon0 = (8.854 * 10^-12) / (36.938 * 10^-9) -> see Dimension Analysis
+        self.coulomb = coulomb(n_boxes_short_range, box, p_error, epsilon0 = epsilon_0 / (36.938 * 10**-9))
+
+        self.neighbours_coulomb, self.distances_coulomb = neighbourlist().compute_neighbourlist(positions, box[0],
+                                                                                                0.49 * box[0])
+        self.r_cut_coulomb, self.k_cut, self.std = self.coulomb.compute_optimal_cutoff(p_error, box, properties, self.neighbours_coulomb, self.distances_coulomb, r_switch, 0.49 * box[0], positions)
+        self.neighbours_coulomb, self.distances_coulomb = neighbourlist().compute_neighbourlist(positions, box[0],
+                                                                                                self.r_cut_coulomb)
+
+        self.coulomb.n_boxes_short_range = np.ceil( self.r_cut_coulomb/self.L[0] ).astype(int)
         self.switch_parameter = self.__get_switch_parameter()
         self.neighbours_LJ, self.distances_LJ= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_LJ)
-        self.neighbours_coulomb, self.distances_coulomb= neighbourlist().compute_neighbourlist(positions, box[0], self.r_cut_coulomb)
-        
         self.Symbols = Symbols
 
         return
@@ -500,7 +505,7 @@ class md(object):
         number_part_A = np.unique(self.labels[:, 2], return_counts=True)[1][0]
         number_part_B = np.unique(self.labels[:, 2], return_counts=True)[1][1]
 
-        totdismatrix = np.linalg.norm(self.d_Pos, axis=2)
+        totdismatrix = np.linalg.norm(self._d_Pos, axis=2)
         distancematrix_particle_A = totdismatrix[number_part_B:self.N, 0:number_part_A]
         distancematrix_particle_B = totdismatrix[0:number_part_A, number_part_B:self.N]
 
@@ -519,7 +524,7 @@ class md(object):
         for i in np.arange(N_steps):
 
             Positions_New, Velocities_New, Forces_New = self.propagte_system()
-            self.positions = Positions_New
+self.l           self.positions = Positions_New
             self.velocities = Velocities_New
             self.forces = Forces_New
             self.neighbours_LJ  = self.get_neighbourlist_LJ()[0]
@@ -563,7 +568,7 @@ class md(object):
                 number_part_A = np.unique(self.labels[:, 2], return_counts=True)[1][0]
                 number_part_B = np.unique(self.labels[:, 2], return_counts=True)[1][1]
 
-                totdismatrix = np.linalg.norm(self.d_Pos, axis=2)
+                totdismatrix = np.linalg.norm(self._d_Pos, axis=2)
                 distancematrix_particle_A = totdismatrix[number_part_B:self.N, 0:number_part_A]
                 distancematrix_particle_B = totdismatrix[0:number_part_A, number_part_B:self.N]
 
