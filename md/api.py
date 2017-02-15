@@ -109,21 +109,21 @@ elif len(sys.argv)>=2:
 
     #Help command
     if sys.argv[1] == "-h" or sys.argv[1] == "help":
-        print "\npython api.py"
-        print "Starts the api.py script with the parameters from the Initial_Parameters.py file that is located in the same directory as api.py. \n"
-        print "\n###.Optional Arguments.###\n"
-        print "-p <file_path>"
-        print "<file_path> has to point on your modified Initial_Parameters.py (e.g. ./Initial_Parameters.py). Copies the target <file_path> to the directory of api.py and runs the script with these new parameters. \n"
-        print "-N <integer>"
-        print "Number of iterations the simulation should run.\n"
-        print "-thr <float>"
-        print "threshold: The stopping condition. (e.g. 1e-11)\n"
-        print "-EnS <integer>"
-        print "Every how many steps the Energy of the system sould be saved.\n"
-        print "-FrS <integer>"
-        print "Every how many steps the Positions of every particle should be saved.\n"
-        print "TeS <integer>"
-        print "Every how many steps the temperatur of every particle should be saved.\n"
+        print ("\npython api.py")
+        print ("Starts the api.py script with the parameters from the Initial_Parameters.py file that is located in the same directory as api.py. \n")
+        print ("\n###.Optional Arguments.###\n")
+        print ("-p <file_path>")
+        print ("<file_path> has to point on your modified Initial_Parameters.py (e.g. ./Initial_Parameters.py). Copies the target <file_path> to the directory of api.py and runs the script with these new parameters. \n")
+        print ("-N <integer>")
+        print ("Number of iterations the simulation should run.\n")
+        print ("-thr <float>")
+        print ("threshold: The stopping condition. (e.g. 1e-11)\n")
+        print ("-EnS <integer>")
+        print ("Every how many steps the Energy of the system sould be saved.\n")
+        print ("-FrS <integer>")
+        print ("Every how many steps the Positions of every particle should be saved.\n")
+        print ("TeS <integer>")
+        print ("Every how many steps the temperatur of every particle should be saved.\n")
 
     #checking for flaggs
     else:
@@ -148,7 +148,7 @@ elif len(sys.argv)>=2:
                     flaggs[5] = 1
                     copyfile(sys.argv[i+1],'./Initial_Parameters.py')
                 else:
-                    print "Error: -p target file does not exist."
+                    assert False, "Error: -p target file does not exist."
 
         import Initial_Parameters as ip
         for i in range(6):

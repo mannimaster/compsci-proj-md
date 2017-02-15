@@ -22,7 +22,7 @@ Coefficients = np.array([1,1])
 Charges = np.array([1.0 ,-1.0])
 
 # Number of Particles
-N = 32
+N = 2
 
 # Boxsize in Angstroem
 L_x=22.56
