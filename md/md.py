@@ -502,8 +502,8 @@ class md(object):
         #######################################################################
         ### write radial distribution function of current frame into a file ###
         #######################################################################
-        number_part_A = np.unique(Labels[:, 2], return_counts=True)[1][0]
-        number_part_B = np.unique(Labels[:, 2], return_counts=True)[1][1]
+        number_part_A = np.unique(self.labels[:, 2], return_counts=True)[1][0]
+        number_part_B = np.unique(self.labels[:, 2], return_counts=True)[1][1]
 
         totdismatrix = np.linalg.norm(self._d_Pos, axis=2)
         distancematrix_particle_A = totdismatrix[number_part_B:self.N, 0:number_part_A]
@@ -524,7 +524,7 @@ class md(object):
         for i in np.arange(N_steps):
 
             Positions_New, Velocities_New, Forces_New = self.propagte_system()
-            self.positions = Positions_New
+self.l           self.positions = Positions_New
             self.velocities = Velocities_New
             self.forces = Forces_New
             self.neighbours_LJ  = self.get_neighbourlist_LJ()[0]
@@ -565,8 +565,8 @@ class md(object):
                 #######################################################################
                 ### write radial distribution function of current frame into a file ###
                 #######################################################################
-                number_part_A = np.unique(Labels[:, 2], return_counts=True)[1][0]
-                number_part_B = np.unique(Labels[:, 2], return_counts=True)[1][1]
+                number_part_A = np.unique(self.labels[:, 2], return_counts=True)[1][0]
+                number_part_B = np.unique(self.labels[:, 2], return_counts=True)[1][1]
 
                 totdismatrix = np.linalg.norm(self._d_Pos, axis=2)
                 distancematrix_particle_A = totdismatrix[number_part_B:self.N, 0:number_part_A]
